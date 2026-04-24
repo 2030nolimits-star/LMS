@@ -14,28 +14,45 @@ import {
   Clock,
   Zap,
   Star,
+  Loader2
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import type { ActiveSession } from "@/lib/session-tracker"
 import { getActiveSessions } from "@/lib/session-tracker"
-
-// Rich Demo Data for Teacher
-const demoCourses = [
-  { id: "1", code: "CS301", title: "Data Structures & Algorithms", color: "hsl(270,80%,70%)", students: 38, assignments: [1,2], pending: 12 },
-  { id: "2", code: "MATH201", title: "Linear Algebra", color: "hsl(168,84%,45%)", students: 45, assignments: [1], pending: 5 },
-]
-
-const demoLiveClasses = [
-  { id: "1", title: "Graph Algorithms Deep Dive", courseName: "CS301", status: "live", scheduledAt: new Date().toISOString() },
-  { id: "2", title: "Linear Transformations", courseName: "MATH201", status: "scheduled", scheduledAt: new Date(Date.now() + 86400000).toISOString() },
-]
+import { getTeacherDashboardData, getTeacherLiveClasses } from "@/lib/queries"
+import type { Course, LiveClass } from "@/lib/types"
 
 export default function TeacherDashboard() {
   const { currentUser } = useAuth()
   const [onlineStudents, setOnlineStudents] = useState<ActiveSession[]>([])
-  if (!currentUser) return null
+  const [courses, setCourses] = useState<Course[]>([])
+  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([])
+  const [totalStudents, setTotalStudents] = useState(0)
+  const [pendingGrading, setPendingGrading] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!currentUser) return;
+    
+    async function loadData() {
+      try {
+        const [dashData, lcData] = await Promise.all([
+          getTeacherDashboardData(currentUser!.id),
+          getTeacherLiveClasses(currentUser!.id)
+        ])
+        setCourses(dashData.courses)
+        setTotalStudents(dashData.totalStudents)
+        setPendingGrading(dashData.pendingGrading)
+        setLiveClasses(lcData)
+      } catch(e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+
     const refreshOnlineStudents = () => {
       const sessions = getActiveSessions().filter(
         (session) => session.role === "student" && session.status === "active"
@@ -47,16 +64,25 @@ export default function TeacherDashboard() {
     const refreshTimer = window.setInterval(refreshOnlineStudents, 15000)
 
     return () => window.clearInterval(refreshTimer)
-  }, [])
+  }, [currentUser])
 
-  const liveNow = demoLiveClasses.filter(lc => lc.status === "live")
-  const upcoming = demoLiveClasses.filter(lc => lc.status === "scheduled")
-  
-  const totalStudents = demoCourses.reduce((sum, c) => sum + c.students, 0)
-  const pendingGrading = demoCourses.reduce((sum, c) => sum + c.pending, 0)
+  if (!currentUser) return null
+
+  if (loading) {
+    return (
+      <DashboardShell role="teacher">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  const liveNow = liveClasses.filter(lc => lc.status === "live")
+  const upcoming = liveClasses.filter(lc => lc.status === "scheduled")
 
   const statCards = [
-    { label: "My Courses", value: demoCourses.length, icon: BookOpen, color: "text-primary", bg: "bg-primary/15", glow: "glow-primary" },
+    { label: "My Courses", value: courses.length, icon: BookOpen, color: "text-primary", bg: "bg-primary/15", glow: "glow-primary" },
     { label: "Total Students", value: totalStudents, icon: Users, color: "text-emerald-400", bg: "bg-emerald-500/15", glow: "glow-success" },
     { label: "Live / Upcoming", value: `${liveNow.length} / ${upcoming.length}`, icon: Video, color: "text-rose-400", bg: "bg-rose-500/15", glow: "glow-destructive" },
     { label: "Pending Grading", value: pendingGrading, icon: ClipboardCheck, color: "text-amber-400", bg: "bg-amber-500/15", glow: "glow-warning" },
@@ -112,6 +138,7 @@ export default function TeacherDashboard() {
               </Link>
             </div>
             <div className="flex flex-col gap-3">
+              {[...liveNow, ...upcoming].length === 0 && <p className="text-sm text-muted-foreground p-2">No active or upcoming live classes.</p>}
               {[...liveNow, ...upcoming].map((lc) => (
                  <div key={lc.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${lc.status === "live" ? "bg-rose-500/20" : "bg-primary/15"}`}>
@@ -126,7 +153,7 @@ export default function TeacherDashboard() {
                    ) : (
                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                        <Clock className="h-3 w-3" />
-                       {new Date(lc.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                       {new Date(lc.scheduledAt || lc.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                      </div>
                    )}
                  </div>
@@ -145,22 +172,26 @@ export default function TeacherDashboard() {
               </Link>
             </div>
             <div className="flex flex-col gap-3">
-               {demoCourses.map(course => (
-                 <div key={course.id} className="flex items-center justify-between rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
-                   <div className="flex items-center gap-3">
-                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: course.color + "25" }}>
-                       <BookOpen className="h-5 w-5" style={{ color: course.color }} />
+               {courses.length === 0 && <p className="text-sm text-muted-foreground p-2">No courses created yet.</p>}
+               {courses.map(course => {
+                 const pending = (course.assignments || []).reduce((sum, a) => sum + (a.submissions?.filter((s:any) => s.status === "submitted").length || 0), 0);
+                 return (
+                   <div key={course.id} className="flex items-center justify-between rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
+                     <div className="flex items-center gap-3">
+                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: (course.color || "#ccc") + "25" }}>
+                         <BookOpen className="h-5 w-5" style={{ color: course.color || "#ccc" }} />
+                       </div>
+                       <div className="flex-1 min-w-0">
+                         <p className="text-sm font-medium text-foreground">{course.code} - {course.title}</p>
+                         <p className="text-xs text-muted-foreground">{(course.students || []).length} Enrolled · {(course.assignments || []).length} Assignments</p>
+                       </div>
                      </div>
-                     <div className="flex-1 min-w-0">
-                       <p className="text-sm font-medium text-foreground">{course.code} - {course.title}</p>
-                       <p className="text-xs text-muted-foreground">{course.students} Enrolled · {course.assignments.length} Assignments</p>
-                     </div>
+                     {pending > 0 && (
+                       <Badge className="bg-amber-500/20 text-amber-400 border-none shrink-0">{pending} to grade</Badge>
+                     )}
                    </div>
-                   {course.pending > 0 && (
-                     <Badge className="bg-amber-500/20 text-amber-400 border-none shrink-0">{course.pending} to grade</Badge>
-                   )}
-                 </div>
-               ))}
+                 )
+               })}
             </div>
           </div>
         </div>

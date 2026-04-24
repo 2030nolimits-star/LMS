@@ -1,38 +1,17 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
 import Link from "next/link"
 import {
   BookOpen, Video, GraduationCap, ClipboardCheck, Clock,
-  ArrowRight, TrendingUp, Zap, Star,
+  ArrowRight, TrendingUp, Zap, Star, Loader2
 } from "lucide-react"
-
-// ─── Rich demo data for live demo ────────────────────────────────────────────
-const demoCourses = [
-  { id: "1", code: "CS301",  title: "Data Structures & Algorithms", color: "hsl(270,80%,70%)", progress: 78, teacher: "Dr. James Carter" },
-  { id: "2", code: "MATH201",title: "Linear Algebra",               color: "hsl(168,84%,45%)", progress: 91, teacher: "Prof. Sarah Kim" },
-  { id: "3", code: "CS401",  title: "Machine Learning",             color: "hsl(200,90%,60%)", progress: 64, teacher: "Dr. Ahmed Hassan" },
-  { id: "4", code: "PHY101", title: "Engineering Physics",          color: "hsl(38,92%,55%)",  progress: 85, teacher: "Prof. Linda Osei" },
-]
-
-const demoGrades = [
-  { id: "1", title: "Binary Trees Lab",     course: "CS301",   score: 94, max: 100 },
-  { id: "2", title: "Matrix Operations",    course: "MATH201", score: 88, max: 100 },
-  { id: "3", title: "Regression Analysis",  course: "CS401",   score: 76, max: 100 },
-  { id: "4", title: "Wave Mechanics Quiz",  course: "PHY101",  score: 91, max: 100 },
-]
-
-const demoLiveClasses = [
-  { id: "1", title: "Graph Algorithms Deep Dive",  course: "CS301",   status: "live",      scheduledAt: new Date().toISOString() },
-  { id: "2", title: "Eigenvectors & Eigenvalues",  course: "MATH201", status: "scheduled", scheduledAt: new Date(Date.now() + 86400000).toISOString() },
-  { id: "3", title: "Neural Network Backprop",     course: "CS401",   status: "scheduled", scheduledAt: new Date(Date.now() + 172800000).toISOString() },
-]
-
-const avgGrade = Math.round(demoGrades.reduce((s, g) => s + (g.score / g.max) * 100, 0) / demoGrades.length)
+import { getStudentCourses, getStudentGrades, getUpcomingLiveClasses, getStudentAttendance } from "@/lib/queries"
+import type { Course, LiveClass, Grade } from "@/lib/types"
 
 function getLetterGrade(pct: number) {
   if (pct >= 93) return "A"
@@ -46,13 +25,67 @@ function getLetterGrade(pct: number) {
 
 export default function StudentDashboard() {
   const { currentUser } = useAuth()
+  const [courses, setCourses] = useState<Course[]>([])
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([])
+  const [attendanceRate, setAttendanceRate] = useState("0%")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    async function loadData() {
+      try {
+        const [courseData, gradeData, attData] = await Promise.all([
+          getStudentCourses(currentUser!.id),
+          getStudentGrades(currentUser!.id),
+          getStudentAttendance(currentUser!.id)
+        ])
+        
+        setCourses(courseData)
+        setGrades(gradeData)
+        
+        const totalAtt = attData.length
+        const presentAtt = attData.filter(a => a.status === "present").length
+        setAttendanceRate(totalAtt > 0 ? `${Math.round((presentAtt / totalAtt) * 100)}%` : "N/A")
+
+        if (courseData.length > 0) {
+          const lcData = await getUpcomingLiveClasses(courseData.map(c => c.id))
+          setLiveClasses(lcData)
+        }
+      } catch(e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [currentUser])
+
   if (!currentUser) return null
 
+  if (loading) {
+    return (
+      <DashboardShell role="student">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  const avgGradeNum = grades.length > 0 
+    ? Math.round(grades.reduce((s, g) => s + (g.score / (g.maxScore || 100)) * 100, 0) / grades.length)
+    : 0;
+  
+  const avgGradeText = grades.length > 0 ? `${avgGradeNum}%` : "N/A";
+
   const statCards = [
-    { label: "Enrolled Courses",   value: demoCourses.length, icon: BookOpen,      color: "text-primary",     bg: "bg-primary/15",     glow: "glow-primary"     },
-    { label: "Avg. Grade",          value: `${avgGrade}%`,     icon: GraduationCap, color: "text-emerald-400", bg: "bg-emerald-500/15", glow: "glow-success"     },
-    { label: "Attendance",          value: "92%",              icon: ClipboardCheck,color: "text-amber-400",   bg: "bg-amber-500/15",   glow: "glow-warning"     },
-    { label: "Upcoming Classes",    value: demoLiveClasses.length, icon: Video,    color: "text-rose-400",    bg: "bg-rose-500/15",    glow: "glow-destructive" },
+    { label: "Enrolled Courses",   value: courses.length, icon: BookOpen,      color: "text-primary",     bg: "bg-primary/15",     glow: "glow-primary"     },
+    { label: "Avg. Grade",          value: avgGradeText,     icon: GraduationCap, color: "text-emerald-400", bg: "bg-emerald-500/15", glow: "glow-success"     },
+    { label: "Attendance",          value: attendanceRate,              icon: ClipboardCheck,color: "text-amber-400",   bg: "bg-amber-500/15",   glow: "glow-warning"     },
+    { label: "Upcoming Classes",    value: liveClasses.length, icon: Video,    color: "text-rose-400",    bg: "bg-rose-500/15",    glow: "glow-destructive" },
   ]
 
   return (
@@ -75,7 +108,7 @@ export default function StudentDashboard() {
           </div>
           <div className="hidden md:flex items-center gap-2 glass-card px-4 py-2">
             <Star className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-medium">GPA 3.7</span>
+            <span className="text-sm font-medium">GPA {(avgGradeNum / 25).toFixed(1)}</span>
           </div>
         </div>
 
@@ -106,21 +139,22 @@ export default function StudentDashboard() {
               </Link>
             </div>
             <div className="flex flex-col gap-3">
-              {demoLiveClasses.map((lc) => (
+              {liveClasses.length === 0 && <p className="text-sm text-muted-foreground p-2">No upcoming live classes.</p>}
+              {liveClasses.slice(0,4).map((lc) => (
                 <div key={lc.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${lc.status === "live" ? "bg-rose-500/20" : "bg-primary/15"}`}>
                     <Video className={`h-4 w-4 ${lc.status === "live" ? "text-rose-400" : "text-primary"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{lc.title}</p>
-                    <p className="text-xs text-muted-foreground">{lc.course}</p>
+                    <p className="text-xs text-muted-foreground">{lc.courseName}</p>
                   </div>
                   {lc.status === "live" ? (
                     <Badge className="bg-rose-500 text-white border-none animate-pulse shrink-0">● LIVE</Badge>
                   ) : (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                       <Clock className="h-3 w-3" />
-                      {new Date(lc.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {new Date(lc.scheduledAt || (lc as any).scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </div>
                   )}
                 </div>
@@ -139,26 +173,34 @@ export default function StudentDashboard() {
               </Link>
             </div>
             <div className="flex flex-col gap-4">
-              {demoCourses.map((course) => (
-                <div key={course.id} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: course.color }} />
-                      <div>
-                        <p className="text-sm font-medium text-foreground leading-none">{course.code}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[180px]">{course.title}</p>
+              {courses.length === 0 && <p className="text-sm text-muted-foreground p-2">You are not enrolled in any courses.</p>}
+              {courses.slice(0,4).map((course) => {
+                // Approximate progress based on assignments
+                const assignments = course.assignments || [];
+                const submitted = grades.filter(g => g.courseCode === course.code).length;
+                const progress = assignments.length > 0 ? Math.round((submitted / assignments.length) * 100) : 0;
+
+                return (
+                  <div key={course.id} className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: course.color || "#ccc" }} />
+                        <div>
+                          <p className="text-sm font-medium text-foreground leading-none">{course.code}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[180px]">{course.title}</p>
+                        </div>
                       </div>
+                      <span className="text-sm font-semibold text-foreground">{progress}%</span>
                     </div>
-                    <span className="text-sm font-semibold text-foreground">{course.progress}%</span>
+                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${progress}%`, backgroundColor: course.color || "#ccc" }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${course.progress}%`, backgroundColor: course.color }}
-                    />
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </div>
@@ -173,25 +215,29 @@ export default function StudentDashboard() {
               <Button variant="ghost" size="sm" className="text-xs">View all <ArrowRight className="ml-1 h-3 w-3" /></Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {demoGrades.map((grade) => {
-              const pct = Math.round((grade.score / grade.max) * 100)
-              const letter = getLetterGrade(pct)
-              const color = pct >= 90 ? "text-emerald-400" : pct >= 75 ? "text-amber-400" : "text-rose-400"
-              return (
-                <div key={grade.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/8 text-lg font-bold ${color}`}>
-                    {letter}
+          {grades.length === 0 ? (
+            <p className="text-sm text-muted-foreground p-2">No grades posted yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {grades.slice(0,4).map((grade) => {
+                const pct = Math.round((grade.score / (grade.maxScore || 100)) * 100)
+                const letter = getLetterGrade(pct)
+                const color = pct >= 90 ? "text-emerald-400" : pct >= 75 ? "text-amber-400" : "text-rose-400"
+                return (
+                  <div key={grade.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/8 text-lg font-bold ${color}`}>
+                      {letter}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{grade.assignmentTitle}</p>
+                      <p className="text-xs text-muted-foreground">{grade.courseName}</p>
+                    </div>
+                    <span className={`text-sm font-bold ${color} shrink-0`}>{grade.score}/{grade.maxScore}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{grade.title}</p>
-                    <p className="text-xs text-muted-foreground">{grade.course}</p>
-                  </div>
-                  <span className={`text-sm font-bold ${color} shrink-0`}>{grade.score}/{grade.max}</span>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
       </div>
