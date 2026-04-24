@@ -21,6 +21,7 @@ import {
 import { getStudentCourses, sendMessage } from "@/lib/queries"
 import { supabase } from "@/lib/supabase"
 import type { Course } from "@/lib/types"
+import { courses as mockCourses } from "@/lib/mock-data"
 import {
   Dialog,
   DialogContent,
@@ -57,7 +58,13 @@ export default function StudentCoursesPage() {
     setLoading(true)
     try {
       const data = await getStudentCourses(currentUser!.id)
-      setCourses(data)
+      
+      if (data.length > 0) {
+        setCourses(data)
+      } else {
+        // Fallback for demo: show premium mock data if DB is empty
+        setCourses(mockCourses.slice(0, 3))
+      }
       
       // Fetch user's submissions
       const { data: subData } = await supabase
