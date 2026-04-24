@@ -99,10 +99,10 @@ export default function TeacherDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              Welcome back, {currentUser.name.split(" ")[0]} 👋
+              Welcome back, {currentUser.name} 👋
             </h1>
             <p className="text-muted-foreground mt-1">
-              Here&apos;s a summary of your teaching activities for today.
+              Here&apos;s your teaching overview for today.
             </p>
           </div>
           <div className="hidden md:flex items-center gap-2 glass-card px-4 py-2">

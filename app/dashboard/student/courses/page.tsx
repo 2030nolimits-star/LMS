@@ -6,9 +6,32 @@ import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BookOpen, FileText, Video as VideoIcon, File, Presentation, Clock, Users, Download, Loader2 } from "lucide-react"
-import { getStudentCourses } from "@/lib/queries"
+import { 
+  BookOpen, 
+  FileText, 
+  Video as VideoIcon, 
+  File, 
+  Presentation, 
+  Clock, 
+  Download, 
+  Loader2, 
+  Upload, 
+  CheckCircle2 
+} from "lucide-react"
+import { getStudentCourses, sendMessage } from "@/lib/queries"
+import { supabase } from "@/lib/supabase"
 import type { Course } from "@/lib/types"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 const materialIcons: Record<string, React.ElementType> = {
   pdf: FileText, video: VideoIcon, document: File, slide: Presentation,
@@ -18,6 +41,12 @@ export default function StudentCoursesPage() {
   const { currentUser } = useAuth()
   const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
+  const [submissions, setSubmissions] = useState<any[]>([])
+  
+  const [isSubmitOpen, setIsSubmitOpen] = useState(false)
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null)
+  const [submissionText, setSubmissionText] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!currentUser) return;
@@ -29,10 +58,47 @@ export default function StudentCoursesPage() {
     try {
       const data = await getStudentCourses(currentUser!.id)
       setCourses(data)
+      
+      // Fetch user's submissions
+      const { data: subData } = await supabase
+        .from("submissions")
+        .select("*")
+        .eq("student_id", currentUser!.id);
+      setSubmissions(subData || []);
+      
     } catch(e) {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleSubmitAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAssignment || !currentUser) return;
+    
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("submissions")
+        .insert([{
+          assignment_id: selectedAssignment.id,
+          student_id: currentUser.id,
+          content: submissionText,
+          status: "submitted",
+          submitted_at: new Date().toISOString()
+        }]);
+        
+      if (error) throw error;
+      
+      toast.success("Assignment submitted successfully!");
+      setIsSubmitOpen(false);
+      setSubmissionText("");
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to submit assignment");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -123,15 +189,15 @@ export default function StudentCoursesPage() {
                             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15">
                               <Icon className="h-4 w-4 text-primary" />
                             </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground">{mat.title}</p>
-                              <p className="text-xs text-muted-foreground">{mat.type.toUpperCase()} · {mat.size}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{mat.title}</p>
+                              <p className="text-xs text-muted-foreground">{mat.type.toUpperCase()} · {mat.size || "Unknown size"}</p>
                             </div>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground shrink-0">
                               {new Date(mat.uploadedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                             </span>
                             {(mat as any).file_url && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10" asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10 shrink-0" asChild>
                                 <a href={(mat as any).file_url} target="_blank" rel="noreferrer">
                                   <Download className="h-4 w-4" />
                                 </a>
@@ -147,27 +213,68 @@ export default function StudentCoursesPage() {
                     <div className="flex flex-col gap-2">
                       {assignments.length === 0 && <p className="text-sm text-muted-foreground p-2">No assignments available.</p>}
                       {assignments.map((a: any) => {
-                         // Find submission if any.
-                         // Wait, getStudentCourses does not return submissions in the query currently.
-                         // For now, let's just show the assignment.
-                         const submitted = false;
-                         const score = null;
+                         const sub = submissions.find(s => s.assignment_id === a.id);
+                         const isGraded = sub?.status === "graded";
 
                          return (
                            <div key={a.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/8 p-3 hover:bg-white/8 transition-colors">
-                             <div className="flex-1">
-                               <p className="text-sm font-medium text-foreground">{a.title}</p>
-                               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                                 <Clock className="h-3 w-3" />
-                                 Due {new Date(a.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                             <div className="flex-1 min-w-0">
+                               <p className="text-sm font-medium text-foreground truncate">{a.title}</p>
+                               <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                                 <span className="flex items-center gap-1">
+                                   <Clock className="h-3 w-3" />
+                                   Due {new Date(a.dueDate || a.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                 </span>
+                                 <span>·</span>
+                                 <span>Max {a.maxScore || a.max_score} pts</span>
                                </div>
                              </div>
-                             {submitted && score !== null ? (
-                               <Badge className="bg-emerald-500/20 text-emerald-400 border-none">{score}/{a.maxScore}</Badge>
-                             ) : submitted ? (
-                               <Badge className="bg-primary/20 text-primary border-none">Submitted</Badge>
+                             
+                             {isGraded ? (
+                               <Badge className="bg-emerald-500/20 text-emerald-400 border-none shrink-0">
+                                 {sub.grade}/{a.maxScore || a.max_score}
+                               </Badge>
+                             ) : sub ? (
+                               <Badge className="bg-primary/20 text-primary border-none shrink-0">
+                                 Submitted
+                               </Badge>
                              ) : (
-                               <Button size="sm" className="rounded-lg text-xs" onClick={() => alert("Submission functionality would open a modal here.")}>Submit</Button>
+                               <Dialog open={isSubmitOpen && selectedAssignment?.id === a.id} onOpenChange={(open) => {
+                                 setIsSubmitOpen(open);
+                                 if (open) setSelectedAssignment(a);
+                               }}>
+                                 <DialogTrigger asChild>
+                                   <Button size="sm" className="rounded-lg text-xs h-8">Submit</Button>
+                                 </DialogTrigger>
+                                 <DialogContent>
+                                   <DialogHeader>
+                                     <DialogTitle>Submit Assignment</DialogTitle>
+                                     <DialogDescription>
+                                       {a.title} - Max {a.maxScore || a.max_score} points
+                                     </DialogDescription>
+                                   </DialogHeader>
+                                   <form onSubmit={handleSubmitAssignment} className="space-y-4 pt-2">
+                                     <div className="space-y-2">
+                                       <Label>Submission Content / Link</Label>
+                                       <Textarea 
+                                         placeholder="Paste your assignment link or content here..." 
+                                         className="min-h-[150px]"
+                                         value={submissionText}
+                                         onChange={(e) => setSubmissionText(e.target.value)}
+                                         required
+                                       />
+                                     </div>
+                                     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-white/5 p-3 rounded-lg border border-white/5">
+                                       <Upload className="h-4 w-4" />
+                                       Note: File uploads are coming soon. Please provide a link for now.
+                                     </div>
+                                     <Button type="submit" className="w-full" disabled={submitting}>
+                                       {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+                                       Submit Assignment
+                                     </Button>
+                                   </form>
+                                 </DialogContent>
+                               </Dialog>
                              )}
                            </div>
                          )

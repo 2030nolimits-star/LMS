@@ -86,7 +86,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent text-xs font-medium text-sidebar-accent-foreground">
-              {currentUser.avatar}
+              {currentUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-sidebar-foreground">

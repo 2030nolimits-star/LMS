@@ -122,7 +122,7 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
           <Button variant="ghost" className="gap-2 pl-2 pr-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                {currentUser.name[0]}
+                {currentUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
               </AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium md:inline-block">
