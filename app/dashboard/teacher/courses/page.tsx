@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import Link from "next/link"
 
 const materialIcons: Record<string, React.ElementType> = {
   pdf: FileText, video: VideoIcon, document: File, slide: Presentation,
@@ -233,6 +234,9 @@ export default function TeacherCoursesPage() {
                                 <Clock className="h-3 w-3" /> Due {new Date(a.dueDate).toLocaleDateString()} · {a.maxScore} Max Pts
                               </p>
                            </div>
+                           <Link href="/dashboard/teacher/grading">
+                             <Button size="sm" variant="outline" className="h-8 rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors">Grade Submissions</Button>
+                           </Link>
                         </div>
                       ))}
                    </div>
