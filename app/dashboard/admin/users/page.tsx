@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner"
 import { getAllUsers, updateUserStatus, createProfile } from "@/lib/queries"
 import type { User } from "@/lib/types"
+import { mockProfiles } from "@/lib/mock-data"
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
@@ -68,7 +69,12 @@ export default function AdminUsersPage() {
     setLoading(true);
     try {
       const data = await getAllUsers();
-      setUsers(data);
+      if (data.length > 0) {
+        setUsers(data);
+      } else {
+        // Fallback for demo
+        setUsers(mockProfiles);
+      }
     } catch (e) {
       console.error("Users load error:", e);
     } finally {

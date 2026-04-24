@@ -449,3 +449,11 @@ export const notifications: Notification[] = [
   { id: "n9", userId: "a1", title: "New Registration", message: "Henry Chen (STU-2025-008) has registered and awaits approval.", type: "system", read: false, createdAt: "2026-02-16T08:00:00", link: "/admin/users" },
   { id: "n10", userId: "a1", title: "System Update", message: "Platform maintenance scheduled for Feb 20 at midnight.", type: "system", read: true, createdAt: "2026-02-15T10:00:00" },
 ]
+
+export const mockProfiles: any[] = [
+  { id: 'u1', name: 'Alice Johnson', email: 'alice@university.edu', role: 'student', registration_number: '4332351', department: 'Computer Science', status: 'active', created_at: '2026-01-01T00:00:00Z' },
+  { id: 'u2', name: 'Dr. Sarah Thompson', email: 'thompson@university.edu', role: 'teacher', registration_number: 'TCH-8821', department: 'Computer Science', status: 'active', created_at: '2026-01-01T00:00:00Z' },
+  { id: 'u3', name: 'Prof. James Carter', email: 'carter@university.edu', role: 'teacher', registration_number: 'TCH-9942', department: 'Mathematics', status: 'active', created_at: '2026-01-01T00:00:00Z' },
+  { id: 'u4', name: 'Bob Smith', email: 'bob@university.edu', role: 'student', registration_number: '4332352', department: 'Physics', status: 'pending', created_at: '2026-02-15T10:30:00Z' },
+  { id: 'u5', name: 'Admin User', email: 'admin@university.edu', role: 'admin', registration_number: 'ADM-001', department: 'Administration', status: 'active', created_at: '2026-01-01T00:00:00Z' }
+];
