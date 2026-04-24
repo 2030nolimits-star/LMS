@@ -45,8 +45,12 @@ export default function TeacherMaterialsPage() {
   const [newMaterial, setNewMaterial] = useState({
     course_id: "",
     title: "",
-    type: "pdf" as any
+    type: "pdf" as any,
+    file_size: "0 MB"
   })
+  const [fileName, setFileName] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+
 
   useEffect(() => {
     if (!currentUser) return;
@@ -74,10 +78,11 @@ export default function TeacherMaterialsPage() {
     setUploading(true);
     try {
       await uploadMaterial({
-        ...newMaterial,
-        file_size: "0.5 MB" // Placeholder for demo
-      } as any);
+        ...newMaterial
+      } as any, selectedFile || undefined);
       toast.success("Material uploaded successfully!");
+      setFileName("");
+      setSelectedFile(null);
       loadData();
     } catch (e) {
       toast.error("Upload failed");
@@ -182,13 +187,29 @@ export default function TeacherMaterialsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>File</Label>
-                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border p-8">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-8 hover:bg-muted/50 transition-colors">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground text-center">
                       <Upload className="h-8 w-8" />
-                      <p className="text-sm">Click to upload or drag and drop</p>
-                      <p className="text-xs">PDF, PPTX, MP4 up to 100MB</p>
+                      <p className="text-sm font-medium text-foreground">
+                        {fileName ? fileName : "Click to select a file from your computer"}
+                      </p>
+                      <p className="text-xs">Supports PDF, DOC, PPT, MP4 (up to 100MB)</p>
                     </div>
-                  </div>
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setSelectedFile(file)
+                          setFileName(file.name)
+                          const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
+                          setNewMaterial({...newMaterial, file_size: `${sizeMB} MB`})
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
                 <Button type="submit" disabled={uploading}>
                   {uploading ? "Uploading..." : "Upload"}
@@ -232,7 +253,13 @@ export default function TeacherMaterialsPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
-                        {mat.title}
+                        {(mat as any).file_url ? (
+                          <a href={(mat as any).file_url} target="_blank" rel="noreferrer" className="hover:underline">
+                            {mat.title}
+                          </a>
+                        ) : (
+                          mat.title
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {mat.courseCode} - {mat.type.toUpperCase()} - {mat.size}
@@ -244,9 +271,13 @@ export default function TeacherMaterialsPage() {
                         day: "numeric",
                       })}
                     </span>
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
+                    {(mat as any).file_url && (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={(mat as any).file_url} target="_blank" rel="noreferrer">
+                          View
+                        </a>
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" className="text-destructive">
                       Delete
                     </Button>

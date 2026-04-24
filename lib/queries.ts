@@ -1,330 +1,526 @@
 import { supabase } from "./supabase";
-import type { Course, LiveClass, Grade, Material, User, Notification } from "./types";
-import { 
-  users as mockUsers, 
-  courses as mockCourses, 
-  liveClasses as mockLiveClasses, 
-  attendanceRecords, 
-  grades as mockGrades, 
-  chatConversations, 
-  chatMessages, 
-  notifications as mockNotifications 
-} from "./mock-data";
+import type { Course, LiveClass, Grade, Material, User } from "./types";
 
 /**
- * MOCK DATA QUERIES
- * This provides a high-fidelity demonstration by bypassing the empty database
- * and using rich in-memory mock data. Mutations are saved in memory so the 
- * app feels fully interactive during the session.
+ * CORE DATA QUERIES
+ * Consolidated and sanitized by AegisAI
  */
-
-let mUsers = [...mockUsers];
-let mCourses = [...mockCourses];
-let mLiveClasses = [...mockLiveClasses];
-let mAttendance = [...attendanceRecords];
-let mGrades = [...mockGrades];
-let mConversations = [...chatConversations];
-let mMessages = [...chatMessages];
-let mNotifications = [...mockNotifications];
-let mSubmissions: any[] = [];
-
-// Helper to simulate network latency
-const delay = (ms = 300) => new Promise(res => setTimeout(res, ms));
 
 // --- Profiles ---
 export async function getProfile(userId: string): Promise<User | null> {
-  await delay();
-  // If the actual user isn't in mock data, return the first mock user of the same role (or teacher)
-  return mUsers.find(u => u.id === userId) || mUsers.find(u => u.role === "teacher") || null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+  
+  if (error) return null;
+  return data as User;
 }
 
 // --- Courses ---
 export async function getStudentCourses(studentId: string): Promise<Course[]> {
-  await delay();
-  return mCourses; // For demo, return all courses
+  const { data: enrollments, error: enrollError } = await supabase
+    .from("enrollments")
+    .select("course_id")
+    .eq("student_id", studentId);
+
+  if (enrollError || !enrollments) return [];
+  const courseIds = enrollments.map(e => e.course_id);
+  
+  const { data: courses, error: courseError } = await supabase
+    .from("courses")
+    .select("*, materials (*), assignments (*), profiles (name)")
+    .in("id", courseIds);
+
+  if (courseError) return [];
+  return courses.map(c => ({
+    ...c,
+    teacherName: (c as any).profiles?.name || "Unknown Instructor"
+  })) as Course[];
 }
 
 export async function getTeacherCourses(teacherId: string): Promise<Course[]> {
-  await delay();
-  // For demo, return all mock courses so the teacher has data
-  return mCourses;
+  const { data, error } = await supabase
+    .from("courses")
+    .select("*, materials (*), assignments (*)")
+    .eq("teacher_id", teacherId);
+
+  if (error) return [];
+  return data.map(c => ({
+    ...c,
+    teacherId: (c as any).teacher_id,
+    materials: (c as any).materials?.map((m: any) => ({
+      ...m,
+      courseId: m.course_id,
+      size: m.file_size,
+      uploadedAt: m.created_at
+    })) || [],
+    assignments: (c as any).assignments?.map((a: any) => ({
+      ...a,
+      dueDate: a.due_date,
+      maxScore: a.max_score
+    })) || []
+  })) as Course[];
 }
 
 // --- Live Classes ---
 export async function getUpcomingLiveClasses(courseIds: string[]): Promise<LiveClass[]> {
-  await delay();
-  return mLiveClasses.filter(lc => lc.status !== "ended");
-}
+  const { data, error } = await supabase
+    .from("live_classes")
+    .select("*, courses (title)")
+    .in("course_id", courseIds)
+    .neq("status", "ended")
+    .order("scheduled_at", { ascending: true });
 
-export async function getTeacherLiveClasses(teacherId: string): Promise<LiveClass[]> {
-  await delay();
-  return mLiveClasses; // Return all for demo
-}
-
-export async function scheduleLiveClass(classData: Partial<LiveClass>) {
-  await delay();
-  const newClass = {
-    id: `lc_${Date.now()}`,
-    ...classData,
-    status: "scheduled",
-    courseName: mCourses.find(c => c.id === classData.courseId)?.title || "Unknown",
-    teacherName: "Demo Teacher",
-    attendees: []
-  } as LiveClass;
-  mLiveClasses.push(newClass);
-
-  // Notify students
-  mUsers.filter(u => u.role === "student").forEach(s => {
-    mNotifications.unshift({
-      id: `n_${Date.now()}_${s.id}`,
-      userId: s.id,
-      title: "Live Class Scheduled",
-      message: `${newClass.title} has been scheduled.`,
-      type: "class",
-      read: false,
-      createdAt: new Date().toISOString(),
-      link: `/dashboard/student/live-classes`
-    } as Notification);
-  });
-
-  return newClass;
-}
-
-export async function getLiveClassById(id: string) {
-  await delay();
-  return mLiveClasses.find(lc => lc.id === id) || null;
+  if (error) return [];
+  return data.map(lc => ({
+    ...lc,
+    courseName: (lc as any).courses?.title || "Unknown Course",
+    scheduledAt: lc.scheduled_at,
+    courseId: lc.course_id
+  })) as LiveClass[];
 }
 
 // --- Grades & Submissions ---
 export async function getStudentGrades(studentId: string): Promise<Grade[]> {
-  await delay();
-  return mGrades;
-}
+  const { data, error } = await supabase
+    .from("submissions")
+    .select("*, assignments (title, max_score, courses (title, code))")
+    .eq("student_id", studentId)
+    .eq("status", "graded");
 
-export async function getPendingSubmissions(teacherId: string) {
-  await delay();
-  // Return mock pending submissions
-  const pending = [];
-  mCourses.forEach(c => {
-    c.assignments?.forEach(a => {
-      a.submissions?.forEach(s => {
-        if (s.status === "submitted" || s.status === "pending") {
-          pending.push({
-            ...s,
-            assignmentTitle: a.title,
-            courseTitle: c.title,
-            maxScore: a.maxScore
-          });
-        }
-      });
-    });
-  });
-  // Add some fake ones if none exist
-  if (pending.length === 0) {
-    pending.push({
-      id: "sub_demo_1",
-      studentId: "u1",
-      studentName: "Alice Johnson",
-      registrationNumber: "STU-2025-001",
-      assignmentId: "a2",
-      assignmentTitle: "Assignment 2: Data Structures",
-      courseTitle: "Introduction to Computer Science",
-      status: "submitted",
-      submittedAt: new Date().toISOString(),
-      maxScore: 100
-    });
-  }
-  return pending as any[];
-}
-
-export async function submitGrade(submissionId: string, grade: number, feedback: string) {
-  await delay();
-  // Create a new grade entry in our mock memory
-  mGrades.push({
-    id: `g_${Date.now()}`,
-    studentId: "u1",
-    studentName: "Alice Johnson",
-    courseId: "c1",
-    courseName: "Introduction to Computer Science",
-    courseCode: "CS101",
-    assignmentId: "a2",
-    assignmentTitle: "Assignment 2: Data Structures",
-    score: grade,
-    maxScore: 100,
-    feedback,
-    gradedAt: new Date().toISOString()
-  });
-
-  // Notify the student
-  mNotifications.unshift({
-    id: `n_${Date.now()}`,
-    userId: "u1",
-    title: "Grade Posted",
-    message: `You received ${grade}/100 on your assignment.`,
-    type: "grade",
-    read: false,
-    createdAt: new Date().toISOString(),
-    link: "/dashboard/student/grades"
-  } as Notification);
-}
-
-// --- Materials ---
-export async function uploadMaterial(materialData: Partial<Material>) {
-  await delay();
-  const course = mCourses.find(c => c.id === materialData.courseId || c.id === (materialData as any).course_id);
-  const newMaterial = {
-    id: `m_${Date.now()}`,
-    courseId: course?.id || "c1",
-    title: materialData.title || "Untitled",
-    type: materialData.type || "document",
-    uploadedAt: new Date().toISOString(),
-    size: (materialData as any).file_size || "1.2 MB",
-    courseTitle: course?.title,
-    courseCode: course?.code
-  };
-  
-  if (course) {
-    if (!course.materials) course.materials = [];
-    course.materials.push(newMaterial as any);
-  }
-
-  // Notify students
-  mUsers.filter(u => u.role === "student").forEach(s => {
-    mNotifications.unshift({
-      id: `n_${Date.now()}_${s.id}`,
-      userId: s.id,
-      title: "New Material Uploaded",
-      message: `${newMaterial.title} has been added to ${course?.title || 'your course'}.`,
-      type: "material",
-      read: false,
-      createdAt: new Date().toISOString(),
-      link: `/dashboard/student/courses`
-    } as Notification);
-  });
-
-  return newMaterial;
+  if (error) return [];
+  return data.map(s => ({
+    id: s.id,
+    studentId: s.student_id,
+    courseName: (s as any).assignments?.courses?.title,
+    courseCode: (s as any).assignments?.courses?.code,
+    assignmentTitle: (s as any).assignments?.title,
+    score: s.grade,
+    maxScore: (s as any).assignments?.max_score,
+    gradedAt: s.submitted_at
+  })) as any[];
 }
 
 // --- Teacher Dashboard Stats ---
 export async function getTeacherDashboardData(teacherId: string) {
-  await delay();
+  const { data: courses, error: courseError } = await supabase
+    .from("courses")
+    .select("*, assignments (*, submissions (*)), materials (*), enrollments (*, profiles (*))")
+    .eq("teacher_id", teacherId);
+
+  if (courseError) return { courses: [], totalStudents: 0, pendingGrading: 0 };
+
+  let pendingGrading = 0;
+  courses.forEach(course => {
+    course.assignments?.forEach((a: any) => {
+      pendingGrading += a.submissions?.filter((s: any) => s.status === "submitted").length || 0;
+    });
+  });
+
+  const { data: enrollments } = await supabase
+    .from("enrollments")
+    .select("student_id")
+    .in("course_id", courses.map(c => c.id));
+  
+  const totalStudents = new Set(enrollments?.map(e => e.student_id) || []).size;
+
   return {
-    courses: mCourses,
-    totalStudents: mUsers.filter(u => u.role === "student").length,
-    pendingGrading: await getPendingSubmissions(teacherId).then(res => res.length)
+    courses: courses.map(c => ({
+      ...c,
+      teacherId: (c as any).teacher_id,
+      students: (c as any).enrollments?.map((e: any) => ({
+        ...e.profiles,
+        registrationNumber: e.profiles.registration_number
+      })) || [],
+      assignments: (c as any).assignments?.map((a: any) => ({
+        ...a,
+        dueDate: a.due_date,
+        maxScore: a.max_score
+      })) || [],
+      materials: (c as any).materials?.map((m: any) => ({
+        ...m,
+        uploadedAt: m.created_at
+      })) || []
+    })) as Course[],
+    totalStudents,
+    pendingGrading
   };
 }
 
 export async function getCourseStudents(courseId: string): Promise<User[]> {
-  await delay();
-  return mUsers.filter(u => u.role === "student");
+  const { data: enrollments } = await supabase
+    .from("enrollments")
+    .select("student_id")
+    .eq("course_id", courseId);
+
+  if (!enrollments) return [];
+  const { data: students } = await supabase
+    .from("profiles")
+    .select("*")
+  return (students || []).map(s => ({
+    ...s,
+    registrationNumber: (s as any).registration_number,
+    joinedAt: (s as any).created_at
+  })) as User[];
 }
 
 // --- Admin System Stats ---
 export async function getAdminDashboardData() {
-  await delay();
+  const [
+    { count: studentCount },
+    { count: teacherCount },
+    { count: courseCount },
+    { data: pendingUsers },
+    { data: activeLive },
+    { data: attendance },
+    { data: submissions },
+    { data: courses }
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "student"),
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "teacher"),
+    supabase.from("courses").select("*", { count: "exact", head: true }),
+    supabase.from("profiles").select("*").eq("status", "pending"),
+    supabase.from("live_classes").select("*, profiles(name)").eq("status", "live"),
+    supabase.from("attendance").select("status"),
+    supabase.from("submissions").select("grade, assignments(max_score, course_id)"),
+    supabase.from("courses").select("id, code, title, enrollments(count)")
+  ]);
+
+  const totalAtt = attendance?.length || 0;
+  const presentAtt = attendance?.filter(a => a.status === "present").length || 0;
+  const attendanceRate = totalAtt > 0 ? Math.round((presentAtt / totalAtt) * 100) : 0;
+
   return {
-    students: mUsers.filter(u => u.role === "student").length,
-    teachers: mUsers.filter(u => u.role === "teacher").length,
-    courses: mCourses.length,
-    pending: mUsers.filter(u => u.status === "pending"),
-    activeLive: mLiveClasses.filter(lc => lc.status === "live"),
-    attendanceRate: 85,
-    attendanceRaw: mAttendance,
-    submissionsRaw: [],
-    coursesRaw: mCourses
+    students: studentCount || 0,
+    teachers: teacherCount || 0,
+    courses: courseCount || 0, // Corrected mapping from coursesCount to courses
+    pending: (pendingUsers || []) as User[],
+    activeLive: (activeLive || []).map(lc => ({
+      ...lc,
+      teacherName: (lc as any).profiles?.name || "Unknown"
+    })) as LiveClass[],
+    attendanceRate,
+    attendanceRaw: attendance || [],
+    submissionsRaw: submissions || [],
+    coursesRaw: courses || []
   };
 }
 
 export async function updateUserStatus(userId: string, status: "active" | "rejected") {
-  await delay();
-  const u = mUsers.find(u => u.id === userId);
-  if (u) u.status = status;
-  return u;
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ status })
+    .eq("id", userId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function createCourse(courseData: Partial<Course>) {
-  await delay();
-  const c = { id: `c_${Date.now()}`, ...courseData } as Course;
-  mCourses.push(c);
-  return c;
+  const { data, error } = await supabase
+    .from("courses")
+    .insert([{
+      ...courseData,
+      teacher_id: (courseData as any).teacherId || (courseData as any).teacher_id
+    }]) // Ensure teacher_id is correctly sent to DB
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function deleteCourse(id: string) {
-  await delay();
-  mCourses = mCourses.filter(c => c.id !== id);
+  const { error } = await supabase
+    .from("courses")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 // --- Messaging & Chat ---
 export async function getConversations(userId: string) {
-  await delay();
-  return mConversations;
+  const { data, error } = await supabase
+    .from("messages")
+    .select(`
+      *,
+      sender:profiles!messages_sender_id_fkey(id, name, role, avatar),
+      receiver:profiles!messages_receiver_id_fkey(id, name, role, avatar)
+    `)
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  const convMap = new Map();
+  data.forEach(msg => {
+    const other = msg.sender_id === userId ? msg.receiver : msg.sender;
+    if (!convMap.has(other.id)) {
+      convMap.set(other.id, {
+        id: other.id,
+        other,
+        lastMessage: msg.content,
+        timestamp: msg.created_at,
+        unreadCount: !msg.is_read && msg.receiver_id === userId ? 1 : 0
+      });
+    } else if (!msg.is_read && msg.receiver_id === userId) {
+      const existing = convMap.get(other.id);
+      existing.unreadCount++;
+    }
+  });
+  return Array.from(convMap.values());
 }
 
 export async function getMessages(userId: string, otherId: string) {
-  await delay();
-  return mMessages;
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${userId})`)
+    .order("created_at", { ascending: true });
+
+  return (data || []) as any[];
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {
-  await delay();
-  const msg = {
-    id: `msg_${Date.now()}`,
-    conversationId: "conv1",
-    senderId,
-    senderName: "You",
-    senderAvatar: "Y",
-    content,
-    timestamp: new Date().toISOString(),
-    read: true
-  };
-  mMessages.push(msg as any);
-  return msg;
+  const { data, error } = await supabase
+    .from("messages")
+    .insert([{ sender_id: senderId, receiver_id: receiverId, content }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
-// --- Notifications ---
 export async function getNotifications(userId: string) {
-  await delay();
-  return mNotifications.filter(n => n.userId === userId || userId === "t1" || userId === "u1"); // Return some for demo
+  const { data, error } = await supabase
+    .from("notifications")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return data.map((n) => ({
+    ...n,
+    createdAt: n.created_at,
+  })) as Notification[];
 }
 
 export async function markNotificationAsRead(notificationId: string) {
-  await delay();
-  const n = mNotifications.find(n => n.id === notificationId);
-  if (n) n.read = true;
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("id", notificationId);
+
+  if (error) throw error;
 }
 
-export async function getUnreadNotificationCount(userId: string) {
-  await delay();
-  return mNotifications.filter(n => !n.read).length;
+export async function getTeacherLiveClasses(teacherId: string) {
+  const { data, error } = await supabase
+    .from("live_classes")
+    .select("*, courses(title)")
+    .eq("teacher_id", teacherId)
+    .order("scheduled_at", { ascending: true });
+
+  if (error) return [];
+  return data.map(lc => ({
+    ...lc,
+    courseName: (lc as any).courses?.title || "Unknown Course"
+  })) as LiveClass[];
+}
+
+export async function scheduleLiveClass(classData: Partial<LiveClass>) {
+  const { data, error } = await supabase
+    .from("live_classes")
+    .insert([classData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function getStudentAttendance(studentId: string) {
-  await delay();
-  return mAttendance.filter(a => a.studentId === studentId || studentId === "u1");
+  const { data, error } = await supabase
+    .from("attendance")
+    .select(`
+      *,
+      courses (title, code),
+      marker:profiles!attendance_marked_by_fkey(name)
+    `)
+    .eq("student_id", studentId)
+    .order("date", { ascending: false });
+
+  if (error) return [];
+  return data.map(record => ({
+    ...record,
+    courseName: (record as any).courses?.title || "Unknown",
+    courseCode: (record as any).courses?.code || "",
+    markedBy: (record as any).marker?.name || "System"
+  }));
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("is_read", false);
+
+  if (error) return 0;
+  return count || 0;
+}
+
+export async function uploadMaterial(materialData: Partial<Material>, file?: File) {
+  let fileUrl = "";
+
+  if (file) {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+    // Support either courseId or course_id depending on how it's passed
+    const courseId = materialData.courseId || (materialData as any).course_id;
+    const filePath = `${courseId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('materials')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      throw new Error(`Failed to upload file: ${uploadError.message}. Make sure you have a public 'materials' storage bucket created in Supabase.`);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('materials')
+      .getPublicUrl(filePath);
+      
+    fileUrl = publicUrl;
+  }
+
+  const insertData = { ...materialData };
+  if (fileUrl) {
+    (insertData as any).file_url = fileUrl;
+  }
+
+  const { data, error } = await supabase
+    .from("materials")
+    .insert([insertData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getPendingSubmissions(teacherId: string) {
+  const { data, error } = await supabase
+    .from("submissions")
+    .select(`
+      *,
+      assignment:assignments (title, max_score, course_id, courses (title)),
+      student:profiles (name, registration_number)
+    `)
+    .eq("status", "submitted")
+    .order("submitted_at", { ascending: true });
+
+  if (error) return [];
+  return data.map(s => ({
+    ...s,
+    assignmentTitle: (s as any).assignment?.title,
+    courseTitle: (s as any).assignment?.courses?.title,
+    studentName: (s as any).student?.name,
+    registrationNumber: (s as any).student?.registration_number, // Correct mapping
+    maxScore: (s as any).assignment?.max_score
+  }));
+}
+
+export async function submitGrade(submissionId: string, grade: number, feedback: string) {
+  const { error } = await supabase
+    .from("submissions")
+    .update({ 
+      grade, 
+      feedback, 
+      status: "graded" 
+    })
+    .eq("id", submissionId);
+
+  if (error) throw error;
 }
 
 export async function bulkMarkAttendance(records: any[]) {
-  await delay();
-  mAttendance.push(...records.map(r => ({ ...r, id: `att_${Date.now()}` })));
+  const { error } = await supabase
+    .from("attendance")
+    .upsert(records);
+
+  if (error) throw error;
 }
 
 export async function getAllUsers() {
-  await delay();
-  return mUsers;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return [];
+  return data.map(u => ({
+    ...u,
+    registrationNumber: u.registration_number,
+    joinedAt: u.created_at
+  })) as User[];
 }
 
 export async function publishGlobalNotification(title: string, message: string, type: "info" | "success" | "warning") {
-  await delay();
-  mUsers.forEach(u => {
-    mNotifications.unshift({
-      id: `n_${Date.now()}_${u.id}`,
-      userId: u.id,
-      title,
-      message,
-      type,
-      read: false,
-      createdAt: new Date().toISOString()
-    } as Notification);
-  });
+  // Fetch all active user IDs
+  const { data: users, error: userError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("status", "active");
+
+  if (userError) throw userError;
+
+  const notifications = users.map(u => ({
+    user_id: u.id,
+    title,
+    message,
+    type,
+    read: false
+  }));
+
+  const { error } = await supabase
+    .from("notifications")
+    .insert(notifications);
+
+  if (error) throw error;
 }
+
+
+export async function getLiveClassById(id: string) {
+  const { data, error } = await supabase
+    .from("live_classes")
+    .select(`
+      *,
+      courses (
+        title,
+        teacher_id,
+        profiles!courses_teacher_id_fkey (
+          name
+        )
+      )
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) return null;
+  
+  // Transform to match LiveClass type
+  return {
+    ...data,
+    courseName: data.courses?.title,
+    teacherId: data.courses?.teacher_id,
+    teacherName: data.courses?.profiles?.name
+  } as LiveClass;
+}
+
