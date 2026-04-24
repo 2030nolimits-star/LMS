@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { CheckCircle2, XCircle, Clock, BookOpen, Loader2 } from "lucide-react"
 import { getStudentAttendance, getStudentCourses } from "@/lib/queries"
 import type { Course } from "@/lib/types"
+import { courses as mockCourses, attendanceRecords as mockAttRecords } from "@/lib/mock-data"
 
 const statusConfig = {
   present: { label: "Present", icon: CheckCircle2, colorClass: "text-emerald-400", bgClass: "bg-emerald-500/15" },
@@ -29,8 +30,15 @@ export default function StudentAttendancePage() {
           getStudentAttendance(currentUser!.id),
           getStudentCourses(currentUser!.id)
         ])
-        setAttendance(attData)
-        setCourses(courseData)
+        
+        if (attData.length > 0 || courseData.length > 0) {
+          setAttendance(attData)
+          setCourses(courseData)
+        } else {
+          // Fallback for demo: Alice's data
+          setAttendance(mockAttRecords.filter(a => a.studentId === 'u1'))
+          setCourses(mockCourses.slice(0, 3))
+        }
       } catch(e) {
         console.error(e)
       } finally {
