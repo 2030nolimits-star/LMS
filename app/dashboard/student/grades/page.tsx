@@ -1,18 +1,12 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
-import { GraduationCap, TrendingUp, Award, BookOpen } from "lucide-react"
-
-const demoGrades = [
-  { id: "1", assignmentTitle: "Binary Trees Lab",        courseCode: "CS301",   courseName: "Data Structures & Algorithms", score: 94, maxScore: 100 },
-  { id: "2", assignmentTitle: "Matrix Operations",        courseCode: "MATH201", courseName: "Linear Algebra",               score: 88, maxScore: 100 },
-  { id: "3", assignmentTitle: "Regression Analysis",      courseCode: "CS401",   courseName: "Machine Learning",             score: 76, maxScore: 100 },
-  { id: "4", assignmentTitle: "Wave Mechanics Quiz",      courseCode: "PHY101",  courseName: "Engineering Physics",          score: 91, maxScore: 100 },
-  { id: "5", assignmentTitle: "Graph Traversal Task",     courseCode: "CS301",   courseName: "Data Structures & Algorithms", score: 86, maxScore: 100 },
-  { id: "6", assignmentTitle: "Eigenvalue Problem Set",   courseCode: "MATH201", courseName: "Linear Algebra",               score: 79, maxScore:  50 },
-]
+import { GraduationCap, TrendingUp, Award, BookOpen, Loader2 } from "lucide-react"
+import { getStudentGrades, getStudentAttendance } from "@/lib/queries"
+import type { Grade } from "@/lib/types"
 
 function getLetterGrade(pct: number) {
   if (pct >= 93) return "A"
@@ -27,9 +21,49 @@ function getLetterGrade(pct: number) {
 
 export default function StudentGradesPage() {
   const { currentUser } = useAuth()
+  const [grades, setGrades] = useState<Grade[]>([])
+  const [attendanceRate, setAttendanceRate] = useState("0%")
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!currentUser) return;
+    loadData();
+  }, [currentUser])
+
+  async function loadData() {
+    setLoading(true)
+    try {
+      const [gradeData, attData] = await Promise.all([
+        getStudentGrades(currentUser!.id),
+        getStudentAttendance(currentUser!.id)
+      ])
+      setGrades(gradeData)
+      
+      const totalAtt = attData.length
+      const presentAtt = attData.filter(a => a.status === "present").length
+      setAttendanceRate(totalAtt > 0 ? `${Math.round((presentAtt / totalAtt) * 100)}%` : "N/A")
+    } catch(e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!currentUser) return null
 
-  const avg = Math.round(demoGrades.reduce((s, g) => s + (g.score / g.maxScore) * 100, 0) / demoGrades.length)
+  if (loading) {
+    return (
+      <DashboardShell role="student">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  const avg = grades.length > 0 
+    ? Math.round(grades.reduce((s, g) => s + (g.score / (g.maxScore || 100)) * 100, 0) / grades.length)
+    : 0;
   const gpa = (avg / 25).toFixed(2)
 
   return (
@@ -45,9 +79,9 @@ export default function StudentGradesPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[
-            { icon: GraduationCap, label: "Current GPA",       value: gpa,       color: "text-primary",     bg: "bg-primary/15",      glow: "glow-primary"  },
-            { icon: TrendingUp,    label: "Overall Average",   value: `${avg}%`,  color: "text-emerald-400", bg: "bg-emerald-500/15",  glow: "glow-success"  },
-            { icon: Award,         label: "Total Credits",     value: "18",       color: "text-amber-400",   bg: "bg-amber-500/15",    glow: "glow-warning"  },
+            { icon: GraduationCap, label: "Current GPA",       value: grades.length > 0 ? gpa : "N/A", color: "text-primary",     bg: "bg-primary/15",      glow: "glow-primary"  },
+            { icon: TrendingUp,    label: "Overall Average",   value: grades.length > 0 ? `${avg}%` : "N/A",  color: "text-emerald-400", bg: "bg-emerald-500/15",  glow: "glow-success"  },
+            { icon: Award,         label: "Attendance",     value: attendanceRate,       color: "text-amber-400",   bg: "bg-amber-500/15",    glow: "glow-warning"  },
           ].map((s) => (
             <div key={s.label} className="glass-card p-5 flex items-center gap-4">
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.bg} ${s.glow}`}>
@@ -66,29 +100,35 @@ export default function StudentGradesPage() {
           <h2 className="font-semibold text-foreground flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary" /> Detailed Records
           </h2>
-          <div className="flex flex-col gap-2">
-            {demoGrades.map((grade) => {
-              const pct = Math.round((grade.score / grade.maxScore) * 100)
-              const letter = getLetterGrade(pct)
-              const colorClass = pct >= 90 ? "text-emerald-400" : pct >= 75 ? "text-amber-400" : "text-rose-400"
-              const bgClass   = pct >= 90 ? "bg-emerald-500/15" : pct >= 75 ? "bg-amber-500/15" : "bg-rose-500/15"
-              return (
-                <div key={grade.id} className="flex items-center gap-4 rounded-xl bg-white/5 border border-white/8 p-4 hover:bg-white/8 transition-colors">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bgClass} text-base font-bold ${colorClass}`}>
-                    {letter}
+          {grades.length === 0 ? (
+            <div className="py-12 text-center text-muted-foreground">
+              No grades have been posted yet.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {grades.map((grade) => {
+                const pct = Math.round((grade.score / (grade.maxScore || 100)) * 100)
+                const letter = getLetterGrade(pct)
+                const colorClass = pct >= 90 ? "text-emerald-400" : pct >= 75 ? "text-amber-400" : "text-rose-400"
+                const bgClass   = pct >= 90 ? "bg-emerald-500/15" : pct >= 75 ? "bg-amber-500/15" : "bg-rose-500/15"
+                return (
+                  <div key={grade.id} className="flex items-center gap-4 rounded-xl bg-white/5 border border-white/8 p-4 hover:bg-white/8 transition-colors">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${bgClass} text-base font-bold ${colorClass}`}>
+                      {letter}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground">{grade.assignmentTitle}</p>
+                      <p className="text-xs text-muted-foreground">{grade.courseCode} · {grade.courseName}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm text-muted-foreground">{grade.score}/{grade.maxScore}</span>
+                      <Badge className={`border-none ${bgClass} ${colorClass}`}>{pct}%</Badge>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">{grade.assignmentTitle}</p>
-                    <p className="text-xs text-muted-foreground">{grade.courseCode} · {grade.courseName}</p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm text-muted-foreground">{grade.score}/{grade.maxScore}</span>
-                    <Badge className={`border-none ${bgClass} ${colorClass}`}>{pct}%</Badge>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </DashboardShell>

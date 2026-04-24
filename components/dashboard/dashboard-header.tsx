@@ -139,13 +139,13 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/dashboard/profile")}>
             <User className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
 
-          {/* Mobile role switcher */}
-          <div className="md:hidden">
+          {/* Role switcher */}
+          <div>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs text-muted-foreground">
               Switch Role (Demo)
@@ -165,7 +165,7 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
           </div>
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+          <DropdownMenuItem onClick={handleLogout} className="text-destructive font-medium">
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </DropdownMenuItem>
