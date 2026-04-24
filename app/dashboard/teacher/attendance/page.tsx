@@ -1,26 +1,45 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { CheckCircle2, ClipboardCheck, Users, XCircle, Clock } from "lucide-react"
-
-const demoCoursesData = [
-  { id: "1", code: "CS301", title: "Data Structures & Algorithms", totalActiveStudents: 38 },
-  { id: "2", code: "MATH201", title: "Linear Algebra", totalActiveStudents: 45 },
-]
-
-const demoRecords = [
-  { id: "r1", date: new Date().toISOString(), course: "CS301", present: 35, absent: 3, late: 0, markedBy: "Me" },
-  { id: "r2", date: new Date(Date.now() - 86400000).toISOString(), course: "MATH201", present: 40, absent: 5, late: 0, markedBy: "Me" },
-  { id: "r3", date: new Date(Date.now() - 172800000).toISOString(), course: "CS301", present: 36, absent: 2, late: 0, markedBy: "Me" },
-]
+import { CheckCircle2, ClipboardCheck, XCircle, Loader2 } from "lucide-react"
+import { getTeacherDashboardData } from "@/lib/queries"
+import type { Course } from "@/lib/types"
 
 export default function TeacherAttendancePage() {
   const { currentUser } = useAuth()
+  const [courses, setCourses] = useState<Course[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!currentUser) return;
+    async function loadData() {
+      try {
+        const data = await getTeacherDashboardData(currentUser!.id);
+        setCourses(data.courses);
+      } catch(e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData()
+  }, [currentUser])
+
   if (!currentUser) return null
+
+  if (loading) {
+    return (
+      <DashboardShell role="teacher">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell role="teacher">
@@ -39,7 +58,8 @@ export default function TeacherAttendancePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-           {demoCoursesData.map(course => (
+           {courses.length === 0 && <p className="text-sm text-muted-foreground p-2 col-span-full">No courses found. Create a course first.</p>}
+           {courses.map(course => (
               <div key={course.id} className="glass-card p-5">
                  <h3 className="font-semibold text-foreground text-lg">{course.title}</h3>
                  <p className="text-sm text-primary mb-4">{course.code}</p>
@@ -49,7 +69,7 @@ export default function TeacherAttendancePage() {
                        <p className="text-xs text-muted-foreground">Avg. Attendance</p>
                     </div>
                     <div className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                       <p className="text-2xl font-bold text-foreground">{course.totalActiveStudents}</p>
+                       <p className="text-2xl font-bold text-foreground">{(course as any).students?.length || 0}</p>
                        <p className="text-xs text-muted-foreground">Total Students</p>
                     </div>
                  </div>
@@ -60,27 +80,10 @@ export default function TeacherAttendancePage() {
         <div className="glass-card p-5 mt-4">
            <h2 className="font-semibold text-foreground mb-4">Recent Roll Calls</h2>
            <div className="flex flex-col gap-3">
-              {demoRecords.map(record => (
-                 <div key={record.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-xl bg-white/5 border border-white/8 p-4 hover:bg-white/10 transition-colors gap-4 md:gap-0">
-                    <div>
-                       <p className="text-sm font-semibold text-foreground">{record.course}</p>
-                       <p className="text-xs text-muted-foreground mt-1">
-                         {new Date(record.date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-                       </p>
-                    </div>
-                    <div className="flex gap-4">
-                       <div className="flex items-center gap-1.5 min-w-[70px]">
-                          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          <span className="text-sm font-medium">{record.present}</span>
-                       </div>
-                       <div className="flex items-center gap-1.5 min-w-[70px]">
-                          <XCircle className="h-4 w-4 text-rose-400" />
-                          <span className="text-sm font-medium">{record.absent}</span>
-                       </div>
-                    </div>
-                    <Button variant="outline" size="sm" className="bg-white/5 border-white/10">View Report</Button>
-                 </div>
-              ))}
+              <div className="py-12 text-center text-muted-foreground">
+                <CheckCircle2 className="h-10 w-10 mx-auto mb-2 opacity-20" />
+                <p>No recent roll calls recorded for your courses.</p>
+              </div>
            </div>
         </div>
       </div>

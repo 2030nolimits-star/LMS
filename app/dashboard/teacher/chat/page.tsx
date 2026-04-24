@@ -1,262 +1,218 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Search, ArrowLeft, Loader2 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { 
-  getConversations, 
-  getMessages, 
-  sendMessage 
-} from "@/lib/queries"
-import { supabase } from "@/lib/supabase"
-import { useEffect, useRef } from "react"
+import { Search, MoreVertical, Send, Smile, Paperclip, Loader2 } from "lucide-react"
+import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/queries"
+import type { User } from "@/lib/types"
 
 export default function TeacherChatPage() {
   const { currentUser } = useAuth()
   const [conversations, setConversations] = useState<any[]>([])
+  const [activeConversation, setActiveConversation] = useState<any>(null)
   const [messages, setMessages] = useState<any[]>([])
-  const [selectedConv, setSelectedConv] = useState<string | null>(null)
-  const [messageInput, setMessageInput] = useState("")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [newMessage, setNewMessage] = useState("")
 
   useEffect(() => {
     if (!currentUser) return;
-    loadConversations();
+    loadData();
+  }, [currentUser])
 
-    const channel = supabase
-      .channel('teacher_realtime_chats')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages' 
-      }, (payload) => {
-        const newMsg = payload.new;
-        if (newMsg.sender_id === selectedConv || newMsg.receiver_id === selectedConv) {
-          setMessages(prev => [...prev, newMsg]);
-        }
-        loadConversations();
-      })
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  }, [currentUser, selectedConv])
-
-  useEffect(() => {
-    if (selectedConv && currentUser) {
-      getMessages(currentUser.id, selectedConv).then(setMessages);
+  async function loadData() {
+    try {
+      const [convs, users] = await Promise.all([
+        getConversations(currentUser!.id),
+        getAllUsers()
+      ]);
+      setConversations(convs);
+      setAllUsers(users.filter(u => u.id !== currentUser!.id));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
-  }, [selectedConv, currentUser])
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages])
-
-  async function loadConversations() {
-    if (!currentUser) return;
-    const data = await getConversations(currentUser.id);
-    setConversations(data);
-    setLoading(false);
   }
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim() || !selectedConv || !currentUser) return;
+  useEffect(() => {
+    if (activeConversation && currentUser) {
+      getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+    }
+  }, [activeConversation, currentUser])
 
-    const content = messageInput;
-    setMessageInput("");
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeConversation || !currentUser) return;
+    
     try {
-      await sendMessage(currentUser.id, selectedConv, content);
-    } catch (error) {
-      console.error("Send error:", error);
+      const msg = await sendMessage(currentUser.id, activeConversation.other.id, newMessage);
+      setMessages([...messages, msg]);
+      setNewMessage("");
+    } catch (e) {
+      console.error(e);
     }
   }
 
   if (!currentUser) return null
 
-  const filteredConvs = conversations.filter((c) =>
-    c.other.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-
-  const selectedConvData = conversations.find((c) => c.id === selectedConv)
-  const otherParticipant = selectedConvData?.other
-
+  if (loading) {
+    return (
+      <DashboardShell role="teacher">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell role="teacher">
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-          <p className="text-muted-foreground">
-            Communicate with your students.
-          </p>
-        </div>
+      <div className="relative flex flex-col gap-6 bg-mesh h-[calc(100vh-8rem)]">
+        <div className="pointer-events-none absolute -top-10 left-1/2 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl -translate-x-1/2" />
 
-        <Card className="flex h-[calc(100vh-14rem)] overflow-hidden border-border/50">
-          <div
-            className={cn(
-              "flex w-full flex-col border-r border-border md:w-80",
-              selectedConv && "hidden md:flex"
-            )}
-          >
-            <div className="border-b border-border p-3">
+        <div className="flex-1 glass-card overflow-hidden flex" style={{ padding: 0 }}>
+          
+          {/* Sidebar / Contacts */}
+          <div className="w-80 border-r border-white/10 flex flex-col hidden md:flex bg-white/[0.02]">
+            <div className="p-4 border-b border-white/10">
+              <h2 className="text-lg font-bold text-foreground mb-4">Messages</h2>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <input 
+                  type="text" 
+                  placeholder="Search users..." 
+                  className="w-full bg-black/20 border border-white/10 rounded-lg pl-9 pr-4 py-2 text-sm text-foreground focus:outline-none focus:border-primary/50 transition-colors placeholder:text-muted-foreground"
                 />
               </div>
             </div>
-            <ScrollArea className="flex-1">
-              {filteredConvs.map((conv) => {
-                const other = conv.participants.find(
-                  (p: any) => p.id !== currentUser.id
-                )
-                if (!other) return null
-                return (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedConv(conv.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 border-b border-border/50 p-3 text-left transition-colors hover:bg-muted/50",
-                      selectedConv === conv.id && "bg-muted"
-                    )}
-                  >
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                        {other.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 overflow-hidden">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-foreground">
-                          {other.name}
-                        </span>
-                        {conv.unreadCount > 0 && (
-                          <Badge className="h-5 min-w-[20px] px-1.5 text-[10px]">
-                            {conv.unreadCount}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {conv.lastMessage}
-                      </p>
+            <div className="flex-1 overflow-y-auto p-2">
+              {conversations.length === 0 && (
+                <div className="p-4 text-xs text-muted-foreground text-center">No active chats. Start a new one with a user below.</div>
+              )}
+              {conversations.map((conv) => (
+                <div 
+                  key={conv.id} 
+                  onClick={() => setActiveConversation(conv)}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${activeConversation?.id === conv.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                >
+                  <div className="relative">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white font-bold text-lg bg-emerald-500/20 text-emerald-400`}>
+                      {conv.other.name.charAt(0)}
                     </div>
-                  </button>
-                )
-              })}
-            </ScrollArea>
-          </div>
-
-          <div
-            className={cn(
-              "flex flex-1 flex-col",
-              !selectedConv && "hidden md:flex"
-            )}
-          >
-            {selectedConv && otherParticipant ? (
-              <>
-                <div className="flex items-center gap-3 border-b border-border p-3">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="md:hidden"
-                    onClick={() => setSelectedConv(null)}
-                  >
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">
-                      {otherParticipant.name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {otherParticipant.name}
-                    </p>
-                    <p className="text-xs capitalize text-muted-foreground">
-                      {otherParticipant.role}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-foreground truncate">{conv.other.name}</p>
+                      <span className="text-[10px] text-muted-foreground">{new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
+                      {conv.lastMessage}
                     </p>
                   </div>
+                  {conv.unreadCount > 0 && (
+                    <div className="h-5 w-5 rounded-full bg-emerald-500 text-[10px] font-bold text-emerald-950 flex items-center justify-center">
+                      {conv.unreadCount}
+                    </div>
+                  )}
                 </div>
+              ))}
+              
+              <div className="mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">All Users</div>
+              {allUsers.filter(u => !conversations.some(c => c.other.id === u.id)).map(user => (
+                <div 
+                  key={user.id} 
+                  onClick={() => setActiveConversation({ id: `new-${user.id}`, other: user, lastMessage: "", timestamp: new Date().toISOString(), unreadCount: 0 })}
+                  className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xs font-bold">{user.name.charAt(0)}</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
+                    <p className="text-[10px] text-muted-foreground capitalize">{user.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-                <ScrollArea className="flex-1 p-4">
-                  <div className="flex flex-col gap-3">
-                    {messages.map((msg) => {
-                      const isMe = msg.sender_id === currentUser.id
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col">
+             {activeConversation ? (
+               <>
+                 {/* Chat Header */}
+                 <div className="h-20 border-b border-white/10 flex items-center justify-between px-6 bg-white/[0.01]">
+                   <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-bold bg-emerald-500/20 text-emerald-400">
+                        {activeConversation.other.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-foreground">{activeConversation.other.name}</h3>
+                        <p className="text-xs text-emerald-400 flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Active
+                        </p>
+                      </div>
+                   </div>
+                   <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+                     <MoreVertical className="h-5 w-5" />
+                   </Button>
+                 </div>
+
+                 {/* Messages */}
+                 <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+                    {messages.length === 0 && <div className="text-center text-xs text-muted-foreground py-10">No messages yet. Send a greeting!</div>}
+                    {messages.map(msg => {
+                      const isMe = msg.sender_id === currentUser.id;
                       return (
-                        <div
-                          key={msg.id}
-                          className={cn(
-                            "flex max-w-[75%] flex-col",
-                            isMe ? "ml-auto items-end" : "items-start"
-                          )}
-                        >
-                          <div
-                            className={cn(
-                              "rounded-xl px-3 py-2 text-sm",
-                              isMe
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-foreground"
-                            )}
-                          >
-                            {msg.content}
+                        <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[70%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                            <div className={`px-4 py-3 rounded-2xl ${isMe ? 'bg-emerald-500 text-emerald-950 rounded-tr-sm shadow-lg shadow-emerald-500/20' : 'bg-white/10 text-foreground rounded-tl-sm border border-white/5'}`}>
+                              {msg.content}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground px-1">
+                              {new Date(msg.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                           </div>
-                          <span className="mt-0.5 text-[10px] text-muted-foreground">
-                            {new Date(msg.created_at).toLocaleTimeString(
-                              "en-US",
-                              { hour: "2-digit", minute: "2-digit" }
-                            )}
-                          </span>
                         </div>
                       )
                     })}
-                    <div ref={scrollRef} />
-                  </div>
-                </ScrollArea>
+                 </div>
 
-                <div className="border-t border-border p-3">
-                  <form
-                    onSubmit={handleSendMessage}
-                    className="flex items-center gap-2"
-                  >
-                    <Input
-                      placeholder="Type a message..."
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button type="submit" size="icon" disabled={!messageInput.trim()}>
-                      <Send className="h-4 w-4" />
-                      <span className="sr-only">Send message</span>
-                    </Button>
-                  </form>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-1 items-center justify-center">
-                <p className="text-sm text-muted-foreground">
-                  Select a conversation to start chatting
-                </p>
-              </div>
-            )}
+                 {/* Input */}
+                 <form onSubmit={handleSend} className="p-4 border-t border-white/10 bg-white/[0.02]">
+                   <div className="flex items-center gap-2 bg-black/20 border border-white/10 rounded-2xl p-2 pr-3">
+                     <Button type="button" variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 shrink-0">
+                       <Paperclip className="h-5 w-5" />
+                     </Button>
+                     <input 
+                       type="text" 
+                       value={newMessage}
+                       onChange={(e) => setNewMessage(e.target.value)}
+                       placeholder="Type your message..." 
+                       className="flex-1 bg-transparent border-none text-sm text-foreground focus:outline-none placeholder:text-muted-foreground px-2"
+                     />
+                     <Button type="submit" size="icon" className="h-10 w-10 rounded-xl shrink-0" disabled={!newMessage.trim()}>
+                       <Send className="h-4 w-4" />
+                     </Button>
+                   </div>
+                 </form>
+               </>
+             ) : (
+               <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
+                 <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                   <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                 </div>
+                 <h3 className="text-lg font-bold text-foreground">Select a conversation</h3>
+                 <p className="text-sm text-muted-foreground mt-1 max-w-xs">Communicate with students and faculty members in real-time.</p>
+               </div>
+             )}
           </div>
-        </Card>
+
+        </div>
       </div>
     </DashboardShell>
   )
 }
+
+import { MessageSquare as MessageSquareIcon } from "lucide-react"

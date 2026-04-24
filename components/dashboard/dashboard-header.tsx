@@ -75,8 +75,9 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
 
       <div className="flex-1" />
 
-      {/* Role switcher (demo only) */}
-      <div className="hidden items-center gap-1 rounded-lg border border-border bg-muted/50 p-0.5 md:flex">
+      {/* Dashboard View Switcher (Demo Only) */}
+      <div className="hidden items-center gap-1 rounded-lg border border-border bg-muted/40 p-0.5 md:flex">
+        <span className="px-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">View:</span>
         {(["student", "teacher", "admin"] as const).map((role) => (
           <button
             key={role}
@@ -84,9 +85,9 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
               switchRole(role)
               router.push(`/dashboard/${role}`)
             }}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+            className={`rounded-md px-3 py-1 text-xs font-medium capitalize transition-all ${
               currentUser.role === role
-                ? "bg-card text-foreground shadow-sm"
+                ? "bg-card text-foreground shadow-sm ring-1 ring-border/50"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -148,7 +149,7 @@ export function DashboardHeader({ onMenuToggle }: DashboardHeaderProps) {
           <div>
             <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Switch Role (Demo)
+              Switch Dashboard View (Demo)
             </DropdownMenuLabel>
             {(["student", "teacher", "admin"] as const).map((role) => (
               <DropdownMenuItem
