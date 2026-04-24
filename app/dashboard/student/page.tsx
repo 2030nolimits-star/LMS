@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { getStudentCourses, getStudentGrades, getUpcomingLiveClasses, getStudentAttendance } from "@/lib/queries"
 import type { Course, LiveClass, Grade } from "@/lib/types"
+import { courses as mockCourses, grades as mockGrades, liveClasses as mockLiveClasses, attendanceRecords as mockAttendance } from "@/lib/mock-data"
 
 function getLetterGrade(pct: number) {
   if (pct >= 93) return "A"
@@ -51,7 +52,16 @@ export default function StudentDashboard() {
 
         if (courseData.length > 0) {
           const lcData = await getUpcomingLiveClasses(courseData.map(c => c.id))
-          setLiveClasses(lcData)
+          setLiveClasses(lcData.length > 0 ? lcData : mockLiveClasses.filter(lc => lc.status !== "ended"))
+        } else {
+          // Fallback for demo: show premium mock data if DB is empty
+          setCourses(mockCourses.slice(0, 3))
+          setGrades(mockGrades.filter(g => g.studentId === "u1"))
+          setLiveClasses(mockLiveClasses.filter(lc => lc.status !== "ended"))
+          
+          const aliceAtt = mockAttendance.filter(a => a.studentId === "u1")
+          const present = aliceAtt.filter(a => a.status === "present").length
+          setAttendanceRate(aliceAtt.length > 0 ? `${Math.round((present / aliceAtt.length) * 100)}%` : "94%")
         }
       } catch(e) {
         console.error(e)

@@ -1,0 +1,6 @@
+id,email,name,role,registration_number,department,status,avatar,created_at
+0444103c-cd70-4f5f-88cf-0047c046a326,alice@university.edu,Alice Johnson,student,4332351,Computer Science,active,AJ,2026-01-01T00:00:00Z
+d23ede1f-1f72-43b1-bd8f-3efb26831849,bob@university.edu,Bob Smith,student,4332352,Computer Science,active,BS,2026-01-01T00:00:00Z
+19af0c0d-ab11-4986-9c04-66f37c63afe9,thompson@university.edu,Dr. Sarah Thompson,teacher,TCH-8821,Computer Science,active,ST,2026-01-01T00:00:00Z
+236eb795-c98d-4cad-8ccb-604560019be0,carter@university.edu,Prof. James Carter,teacher,TCH-9942,Mathematics,active,JC,2026-01-01T00:00:00Z
+77f0a1f3-a3f9-4f2a-88c9-d5d7a6ad0dac,admin@university.edu,Admin User,admin,ADM-001,Administration,active,AU,2026-01-01T00:00:00Z

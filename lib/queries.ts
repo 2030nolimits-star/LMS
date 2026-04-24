@@ -208,6 +208,25 @@ export async function getAdminDashboardData() {
   };
 }
 
+export async function createProfile(profileData: any) {
+  // In a real production app, this would use the Admin Auth API to create a user.
+  // For this delivery, we create a profile entry. 
+  // We'll generate a random UUID for the profile if no auth user is linked yet.
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert([{
+      ...profileData,
+      id: profileData.id || crypto.randomUUID(),
+      status: profileData.status || 'active',
+      registration_number: profileData.registrationNumber
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function updateUserStatus(userId: string, status: "active" | "rejected") {
   const { data, error } = await supabase
     .from("profiles")
@@ -254,10 +273,14 @@ export async function getConversations(userId: string) {
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
-  if (error) return [];
+  if (error || !data) return [];
   const convMap = new Map();
   data.forEach(msg => {
     const other = msg.sender_id === userId ? msg.receiver : msg.sender;
+    
+    // Safety check to prevent crash if a user profile is missing
+    if (!other || !other.id) return;
+
     if (!convMap.has(other.id)) {
       convMap.set(other.id, {
         id: other.id,
@@ -464,7 +487,7 @@ export async function getAllUsers() {
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (error) return [];
+  if (error || !data) return [];
   return data.map(u => ({
     ...u,
     registrationNumber: u.registration_number,

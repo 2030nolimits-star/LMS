@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { Search, MoreVertical, Send, Smile, Paperclip, Loader2 } from "lucide-react"
+import { Search, MoreVertical, Send, Smile, Paperclip, Loader2, MessageSquare as MessageSquareIcon } from "lucide-react"
 import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/queries"
 import type { User } from "@/lib/types"
 
@@ -100,13 +100,15 @@ export default function TeacherChatPage() {
                 >
                   <div className="relative">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white font-bold text-lg bg-emerald-500/20 text-emerald-400`}>
-                      {conv.other.name.charAt(0)}
+                      {(conv.other.name || "U").charAt(0)}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-foreground truncate">{conv.other.name}</p>
-                      <span className="text-[10px] text-muted-foreground">{new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {conv.timestamp ? new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                      </span>
                     </div>
                     <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-emerald-400 font-medium' : 'text-muted-foreground'}`}>
                       {conv.lastMessage}
@@ -127,7 +129,7 @@ export default function TeacherChatPage() {
                   onClick={() => setActiveConversation({ id: `new-${user.id}`, other: user, lastMessage: "", timestamp: new Date().toISOString(), unreadCount: 0 })}
                   className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xs font-bold">{user.name.charAt(0)}</div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xs font-bold">{(user.name || "U").charAt(0)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
                     <p className="text-[10px] text-muted-foreground capitalize">{user.role}</p>
@@ -145,7 +147,7 @@ export default function TeacherChatPage() {
                  <div className="h-20 border-b border-white/10 flex items-center justify-between px-6 bg-white/[0.01]">
                    <div className="flex items-center gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-bold bg-emerald-500/20 text-emerald-400">
-                        {activeConversation.other.name.charAt(0)}
+                        {(activeConversation.other.name || "U").charAt(0)}
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-foreground">{activeConversation.other.name}</h3>
@@ -171,7 +173,7 @@ export default function TeacherChatPage() {
                               {msg.content}
                             </div>
                             <span className="text-[10px] text-muted-foreground px-1">
-                              {new Date(msg.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
                             </span>
                           </div>
                         </div>
@@ -201,7 +203,7 @@ export default function TeacherChatPage() {
              ) : (
                <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
                  <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                   <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                   <MessageSquareIcon className="h-8 w-8 text-muted-foreground" />
                  </div>
                  <h3 className="text-lg font-bold text-foreground">Select a conversation</h3>
                  <p className="text-sm text-muted-foreground mt-1 max-w-xs">Communicate with students and faculty members in real-time.</p>
@@ -215,4 +217,3 @@ export default function TeacherChatPage() {
   )
 }
 
-import { MessageSquare as MessageSquareIcon } from "lucide-react"

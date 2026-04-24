@@ -1,0 +1,5 @@
+id,course_id,title,description,due_date,max_score
+97986008-bdf7-4c11-8ec2-3f18450ea22f,ff47be00-c050-4eec-ae89-b91518811062,Assignment 1: Hello World Program,Write your first Python program.,2026-02-01,100
+3fb6d16b-9888-476b-bb30-c82bf73fcb01,ff47be00-c050-4eec-ae89-b91518811062,Assignment 2: Data Structures,Implement a linked list.,2026-02-15,100
+f93b38f7-f7df-4184-9f83-38619722e79a,958e9801-5fc3-4860-b501-9e9dbae389ae,Problem Set 1: Integration,Solve 20 problems.,2026-02-08,100
+26440911-10bf-43b2-86c1-f5809ba020b3,4897a195-2bb4-4d95-becf-b25b02ca8ab5,Lab 1: Logic Gates,"Build AND, OR, NOT gates.",2026-02-10,50

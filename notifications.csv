@@ -1,0 +1,4 @@
+id,user_id,title,message,type,is_read,created_at
+3297506f-b6e9-421b-a179-5963b97d182c,0444103c-cd70-4f5f-88cf-0047c046a326,Grade Posted,Your grade for Assignment 1 has been posted.,grade,false,2026-02-16T09:00:00Z
+af87f508-f4fe-4e35-a8fd-38c48a391a2e,0444103c-cd70-4f5f-88cf-0047c046a326,New Material,Week 4 notes uploaded.,material,false,2026-02-15T16:00:00Z
+140f3186-3a2f-4077-a06a-6faa89020c84,0444103c-cd70-4f5f-88cf-0047c046a326,Live Class Starting,Graph Algorithms starts in 30 mins.,class,true,2026-04-24T22:14:00Z

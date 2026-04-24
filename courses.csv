@@ -1,0 +1,4 @@
+id,title,code,description,teacher_id,color,semester,credits
+ff47be00-c050-4eec-ae89-b91518811062,Data Structures & Algorithms,CS-433,Advanced data structures and algorithmic analysis.,19af0c0d-ab11-4986-9c04-66f37c63afe9,"hsl(234, 89%, 58%)",Spring 2026,4
+958e9801-5fc3-4860-b501-9e9dbae389ae,Linear Algebra,MATH-301,"Study of vectors, matrices, and linear transformations.",236eb795-c98d-4cad-8ccb-604560019be0,"hsl(160, 60%, 45%)",Spring 2026,3
+4897a195-2bb4-4d95-becf-b25b02ca8ab5,Machine Learning,CS-401,Foundations of machine learning and neural networks.,19af0c0d-ab11-4986-9c04-66f37c63afe9,"hsl(38, 92%, 50%)",Spring 2026,4

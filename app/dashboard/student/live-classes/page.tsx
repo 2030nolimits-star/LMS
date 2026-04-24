@@ -7,13 +7,10 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Video, Clock, Calendar, Users, PlayCircle, Zap } from "lucide-react"
 
-// Rich demo data
-const demoSessions = [
-  { id: "lc1", title: "Graph Algorithms Deep Dive", courseName: "Data Structures & Algorithms", status: "live",      scheduledAt: new Date().toISOString(), duration: 90, teacher: "Dr. James Carter" },
-  { id: "lc2", title: "Eigenvectors & Eigenvalues", courseName: "Linear Algebra",               status: "scheduled", scheduledAt: new Date(Date.now() + 86400000).toISOString(), duration: 60, teacher: "Prof. Sarah Kim" },
-  { id: "lc3", title: "Neural Network Backprop",    courseName: "Machine Learning",             status: "scheduled", scheduledAt: new Date(Date.now() + 172800000).toISOString(), duration: 120, teacher: "Dr. Ahmed Hassan" },
-  { id: "lc5", title: "Quantum State Superposition",courseName: "Engineering Physics",          status: "ended",     scheduledAt: new Date(Date.now() - 400000000).toISOString(), duration: 60, teacher: "Prof. Linda Osei" },
-]
+import { liveClasses as mockLiveClasses } from "@/lib/mock-data"
+
+// Rich demo data is now centralized in lib/mock-data.ts
+const demoSessions = mockLiveClasses;
 
 export default function StudentLiveClassesPage() {
   const { currentUser } = useAuth()

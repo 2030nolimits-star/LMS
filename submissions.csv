@@ -1,0 +1,5 @@
+id,student_id,assignment_id,submitted_at,grade,feedback,status
+31565dbb-6264-44bf-a156-46883fcb71ef,0444103c-cd70-4f5f-88cf-0047c046a326,97986008-bdf7-4c11-8ec2-3f18450ea22f,2026-01-30,95,Excellent work!,graded
+2fcacd76-0884-43df-926d-3c6d87a3c783,0444103c-cd70-4f5f-88cf-0047c046a326,f93b38f7-f7df-4184-9f83-38619722e79a,2026-02-07,90,Strong understanding.,graded
+90f3a881-ba5a-4db6-b92c-c1c1473ded9e,0444103c-cd70-4f5f-88cf-0047c046a326,26440911-10bf-43b2-86c1-f5809ba020b3,2026-02-09,48,Excellent lab work.,graded
+3542e4d6-8348-4f1a-9e1d-9efb64253e0e,d23ede1f-1f72-43b1-bd8f-3efb26831849,97986008-bdf7-4c11-8ec2-3f18450ea22f,2026-01-31,88,Good effort.,graded

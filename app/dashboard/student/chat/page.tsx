@@ -100,13 +100,15 @@ export default function StudentChatPage() {
                 >
                   <div className="relative">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white font-bold text-lg bg-primary/20 text-primary`}>
-                      {conv.other.name.charAt(0)}
+                      {(conv.other.name || "U").charAt(0)}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-foreground truncate">{conv.other.name}</p>
-                      <span className="text-[10px] text-muted-foreground">{new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {conv.timestamp ? new Date(conv.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}
+                      </span>
                     </div>
                     <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
                       {conv.lastMessage}
@@ -127,7 +129,7 @@ export default function StudentChatPage() {
                   onClick={() => setActiveConversation({ id: `new-${user.id}`, other: user, lastMessage: "", timestamp: new Date().toISOString(), unreadCount: 0 })}
                   className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
                 >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xs font-bold">{user.name.charAt(0)}</div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-xs font-bold">{(user.name || "U").charAt(0)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
                     <p className="text-[10px] text-muted-foreground capitalize">{user.role}</p>
@@ -145,7 +147,7 @@ export default function StudentChatPage() {
                  <div className="h-20 border-b border-white/10 flex items-center justify-between px-6 bg-white/[0.01]">
                    <div className="flex items-center gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white font-bold bg-primary/20 text-primary">
-                        {activeConversation.other.name.charAt(0)}
+                        {(activeConversation.other.name || "U").charAt(0)}
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-foreground">{activeConversation.other.name}</h3>
@@ -171,7 +173,7 @@ export default function StudentChatPage() {
                               {msg.content}
                             </div>
                             <span className="text-[10px] text-muted-foreground px-1">
-                              {new Date(msg.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {msg.created_at ? new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}
                             </span>
                           </div>
                         </div>

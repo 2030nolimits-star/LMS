@@ -1,0 +1,6 @@
+id,sender_id,receiver_id,content,is_read,created_at
+a712ef89-76e9-4d98-883d-5255685d1cb9,19af0c0d-ab11-4986-9c04-66f37c63afe9,0444103c-cd70-4f5f-88cf-0047c046a326,"Hi Alice, great work on your Assignment 1.",true,2026-02-16T13:00:00Z
+dae292d5-9e60-4fc3-8d4c-542e6faa4cd7,0444103c-cd70-4f5f-88cf-0047c046a326,19af0c0d-ab11-4986-9c04-66f37c63afe9,"Thank you, Dr. Thompson!",true,2026-02-16T13:15:00Z
+a0f1c2d7-f5c8-4918-90f6-5b743c6ab60b,19af0c0d-ab11-4986-9c04-66f37c63afe9,0444103c-cd70-4f5f-88cf-0047c046a326,"For Assignment 2, handle edge cases.",true,2026-02-16T14:00:00Z
+7bc04926-395c-40c4-aa13-2f9bf025fd79,0444103c-cd70-4f5f-88cf-0047c046a326,19af0c0d-ab11-4986-9c04-66f37c63afe9,Will do!,true,2026-02-16T14:30:00Z
+2dae8501-d610-474c-a63e-9ff86d804af3,236eb795-c98d-4cad-8ccb-604560019be0,0444103c-cd70-4f5f-88cf-0047c046a326,Workshop starts tomorrow.,false,2026-02-17T09:00:00Z

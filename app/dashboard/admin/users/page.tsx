@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -30,7 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Search, UserPlus, MoreHorizontal } from "lucide-react"
+import { Search, UserPlus, MoreHorizontal, Loader2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,9 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { toast } from "sonner"
-import { getAllUsers, updateUserStatus } from "@/lib/queries"
-import { useEffect } from "react"
-import { Loader2 } from "lucide-react"
+import { getAllUsers, updateUserStatus, createProfile } from "@/lib/queries"
 import type { User } from "@/lib/types"
 
 export default function AdminUsersPage() {
@@ -49,6 +47,18 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  
+  // New user form state
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [addingUser, setAddingUser] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    registrationNumber: "",
+    role: "student",
+    department: "General"
+  })
 
   useEffect(() => {
     loadData();
@@ -76,6 +86,37 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddingUser(true);
+    try {
+      await createProfile({
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        email: formData.email,
+        registrationNumber: formData.registrationNumber,
+        role: formData.role,
+        department: formData.department,
+        status: "active"
+      });
+      
+      toast.success("User added successfully!");
+      setIsDialogOpen(false);
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        registrationNumber: "",
+        role: "student",
+        department: "General"
+      });
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to add user");
+    } finally {
+      setAddingUser(false);
+    }
+  }
+
   if (loading) {
     return (
       <DashboardShell role="admin">
@@ -88,9 +129,9 @@ export default function AdminUsersPage() {
 
   const filtered = users.filter((u) => {
     const matchSearch =
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
+      (u.name || "").toLowerCase().includes(search.toLowerCase()) ||
       (u.registrationNumber || "").toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+      (u.email || "").toLowerCase().includes(search.toLowerCase())
     const matchRole = roleFilter === "all" || u.role === roleFilter
     const matchStatus = statusFilter === "all" || (u.status as any) === statusFilter
     return matchSearch && matchRole && matchStatus
@@ -108,7 +149,7 @@ export default function AdminUsersPage() {
               Manage students, teachers, and administrators.
             </p>
           </div>
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <UserPlus className="mr-2 h-4 w-4" />
@@ -119,34 +160,52 @@ export default function AdminUsersPage() {
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
               </DialogHeader>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  toast.success("User added successfully!")
-                }}
-                className="flex flex-col gap-4"
-              >
+              <form onSubmit={handleAddUser} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="flex flex-col gap-2">
                     <Label>First Name</Label>
-                    <Input placeholder="John" />
+                    <Input 
+                      placeholder="John" 
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                      required
+                    />
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label>Last Name</Label>
-                    <Input placeholder="Doe" />
+                    <Input 
+                      placeholder="Doe" 
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                      required
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Email</Label>
-                  <Input type="email" placeholder="john@university.edu" />
+                  <Input 
+                    type="email" 
+                    placeholder="john@university.edu" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Registration Number</Label>
-                  <Input placeholder="STU-2026-XXX" />
+                  <Input 
+                    placeholder="STU-2026-XXX" 
+                    value={formData.registrationNumber}
+                    onChange={(e) => setFormData({...formData, registrationNumber: e.target.value})}
+                    required
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>Role</Label>
-                  <Select>
+                  <Select 
+                    value={formData.role} 
+                    onValueChange={(val) => setFormData({...formData, role: val})}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -157,7 +216,10 @@ export default function AdminUsersPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button type="submit">Add User</Button>
+                <Button type="submit" disabled={addingUser}>
+                  {addingUser ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <UserPlus className="h-4 w-4 mr-2" />}
+                  Add User
+                </Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -213,13 +275,19 @@ export default function AdminUsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((user) => (
+                  {filtered.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                        No users found.
+                      </TableCell>
+                    </TableRow>
+                  ) : filtered.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary/10 text-[10px] items-center justify-center text-primary">
-                              {user.name[0]}
+                            <AvatarFallback className="bg-primary/10 text-[10px] items-center justify-center text-primary uppercase">
+                              {(user.name || "U").charAt(0)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -252,7 +320,7 @@ export default function AdminUsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(user.joinedAt).toLocaleDateString("en-US", {
+                        {new Date(user.joinedAt || new Date()).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",
@@ -308,8 +376,8 @@ export default function AdminUsersPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
-                      <AvatarFallback className="bg-primary/10 text-[10px] items-center justify-center text-primary">
-                        {user.name[0]}
+                      <AvatarFallback className="bg-primary/10 text-[10px] items-center justify-center text-primary uppercase">
+                        {(user.name || "U").charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -363,7 +431,7 @@ export default function AdminUsersPage() {
                     {user.status}
                   </Badge>
                   <span className="ml-auto text-xs text-muted-foreground">
-                    {new Date(user.joinedAt).toLocaleDateString("en-US", {
+                    {new Date(user.joinedAt || new Date()).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

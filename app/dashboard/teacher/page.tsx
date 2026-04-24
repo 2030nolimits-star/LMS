@@ -21,6 +21,7 @@ import type { ActiveSession } from "@/lib/session-tracker"
 import { getActiveSessions } from "@/lib/session-tracker"
 import { getTeacherDashboardData, getTeacherLiveClasses } from "@/lib/queries"
 import type { Course, LiveClass } from "@/lib/types"
+import { courses as mockCourses, liveClasses as mockLiveClasses } from "@/lib/mock-data"
 
 export default function TeacherDashboard() {
   const { currentUser } = useAuth()
@@ -40,10 +41,18 @@ export default function TeacherDashboard() {
           getTeacherDashboardData(currentUser!.id),
           getTeacherLiveClasses(currentUser!.id)
         ])
-        setCourses(dashData.courses)
-        setTotalStudents(dashData.totalStudents)
-        setPendingGrading(dashData.pendingGrading)
-        setLiveClasses(lcData)
+        if (dashData.courses.length > 0 || lcData.length > 0) {
+          setCourses(dashData.courses)
+          setTotalStudents(dashData.totalStudents)
+          setPendingGrading(dashData.pendingGrading)
+          setLiveClasses(lcData)
+        } else {
+          // Fallback for demo: show premium mock data if DB is empty
+          setCourses(mockCourses.slice(0, 2))
+          setTotalStudents(128)
+          setPendingGrading(5)
+          setLiveClasses(mockLiveClasses.filter(lc => lc.status !== "ended"))
+        }
       } catch(e) {
         console.error(e)
       } finally {
@@ -153,7 +162,7 @@ export default function TeacherDashboard() {
                    ) : (
                      <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
                        <Clock className="h-3 w-3" />
-                       {new Date(lc.scheduledAt || lc.scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                       {new Date(lc.scheduledAt || (lc as any).scheduled_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                      </div>
                    )}
                  </div>

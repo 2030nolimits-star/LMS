@@ -1,0 +1,5 @@
+id,course_id,title,scheduled_at,duration,status,teacher_id
+62666c36-49f0-4306-a074-3d5e6425a9e3,ff47be00-c050-4eec-ae89-b91518811062,Graph Algorithms Deep Dive,2026-04-24T22:44:00Z,90,live,19af0c0d-ab11-4986-9c04-66f37c63afe9
+411b08f3-bef3-479f-a1b8-00e3dc65f8d8,958e9801-5fc3-4860-b501-9e9dbae389ae,Eigenvectors & Eigenvalues,2026-04-25T11:44:00Z,60,scheduled,236eb795-c98d-4cad-8ccb-604560019be0
+3799d718-ab73-4377-9f14-2673115ebe9c,4897a195-2bb4-4d95-becf-b25b02ca8ab5,Neural Network Backprop,2026-04-26T11:44:00Z,120,scheduled,19af0c0d-ab11-4986-9c04-66f37c63afe9
+6a61d1cd-e14b-4859-8a8d-50804a813d7b,ff47be00-c050-4eec-ae89-b91518811062,Quantum State Superposition,2026-04-20T10:00:00Z,60,ended,19af0c0d-ab11-4986-9c04-66f37c63afe9
