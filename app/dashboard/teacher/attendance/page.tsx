@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { CheckCircle2, ClipboardCheck, XCircle, Loader2 } from "lucide-react"
 import { getTeacherDashboardData } from "@/lib/queries"
 import type { Course } from "@/lib/types"
+import { courses as mockCourses } from "@/lib/mock-data"
 
 export default function TeacherAttendancePage() {
   const { currentUser } = useAuth()
@@ -19,8 +20,13 @@ export default function TeacherAttendancePage() {
     async function loadData() {
       try {
         const data = await getTeacherDashboardData(currentUser!.id);
-        setCourses(data.courses);
-      } catch(e) {
+      if (data.courses.length > 0) {
+        setCourses(data.courses)
+      } else {
+        // Fallback for demo: show premium mock courses
+        setCourses(mockCourses.slice(0, 2))
+      }
+    } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);

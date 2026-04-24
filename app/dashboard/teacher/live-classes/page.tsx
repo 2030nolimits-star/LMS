@@ -9,6 +9,7 @@ import Link from "next/link"
 import { Video, Clock, Calendar, Users, Zap, PlayCircle, Loader2, Plus } from "lucide-react"
 import { getTeacherLiveClasses, scheduleLiveClass, getTeacherCourses } from "@/lib/queries"
 import type { LiveClass, Course } from "@/lib/types"
+import { courses as mockCourses } from "@/lib/mock-data"
 import {
   Dialog,
   DialogContent,
@@ -49,8 +50,15 @@ export default function TeacherLiveClassesPage() {
         getTeacherLiveClasses(currentUser!.id),
         getTeacherCourses(currentUser!.id)
       ])
-      setClasses(lcData)
-      setCourses(cData)
+      
+      if (cData.length > 0) {
+        setClasses(lcData)
+        setCourses(cData)
+      } else {
+        // Fallback for demo
+        setCourses(mockCourses.slice(0, 2))
+        setClasses([])
+      }
     } catch(e) {
       console.error(e)
     } finally {

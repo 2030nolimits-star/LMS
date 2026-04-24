@@ -27,6 +27,7 @@ import { FileText, Video, File, Presentation, Plus, Upload, Loader2 } from "luci
 import { toast } from "sonner"
 import { getTeacherCourses, uploadMaterial } from "@/lib/queries"
 import type { Course, Material } from "@/lib/types"
+import { courses as mockCourses } from "@/lib/mock-data"
 import { useEffect } from "react"
 
 const materialIcons: Record<string, React.ElementType> = {
@@ -61,7 +62,12 @@ export default function TeacherMaterialsPage() {
     setLoading(true);
     try {
       const data = await getTeacherCourses(currentUser!.id);
-      setCourses(data);
+      if (data.length > 0) {
+        setCourses(data);
+      } else {
+        // Fallback for demo
+        setCourses(mockCourses.slice(0, 2));
+      }
     } catch (e) {
       console.error("Materials load error:", e);
     } finally {

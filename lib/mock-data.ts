@@ -457,3 +457,8 @@ export const mockProfiles: any[] = [
   { id: 'u4', name: 'Bob Smith', email: 'bob@university.edu', role: 'student', registration_number: '4332352', department: 'Physics', status: 'pending', created_at: '2026-02-15T10:30:00Z' },
   { id: 'u5', name: 'Admin User', email: 'admin@university.edu', role: 'admin', registration_number: 'ADM-001', department: 'Administration', status: 'active', created_at: '2026-01-01T00:00:00Z' }
 ];
+
+export const mockSubmissions: any[] = [
+  { id: 'sub-1', studentName: 'Alice Johnson', studentReg: '4332351', assignmentTitle: 'Assignment 2: Data Structures', courseTitle: 'Data Structures & Algorithms', submitted_at: '2026-02-14T15:00:00Z', maxScore: 100, grade: 0, feedback: '', assignment: { course_id: 'c1' } },
+  { id: 'sub-2', studentName: 'Bob Smith', studentReg: '4332352', assignmentTitle: 'Assignment 2: Data Structures', courseTitle: 'Data Structures & Algorithms', submitted_at: '2026-02-16T11:20:00Z', maxScore: 100, grade: 0, feedback: '', assignment: { course_id: 'c1' } }
+];

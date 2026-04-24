@@ -36,6 +36,7 @@ import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import { getTeacherCourses, getPendingSubmissions, submitGrade } from "@/lib/queries"
 import { useEffect } from "react"
 import type { Course } from "@/lib/types"
+import { courses as mockCourses, mockSubmissions } from "@/lib/mock-data"
 
 export default function TeacherGradingPage() {
   const { currentUser } = useAuth()
@@ -59,8 +60,15 @@ export default function TeacherGradingPage() {
         getTeacherCourses(currentUser!.id),
         getPendingSubmissions(currentUser!.id)
       ]);
-      setCourses(cData);
-      setSubmissions(sData);
+      
+      if (cData.length > 0 || sData.length > 0) {
+        setCourses(cData);
+        setSubmissions(sData);
+      } else {
+        // Fallback for demo
+        setCourses(mockCourses.slice(0, 2));
+        setSubmissions(mockSubmissions);
+      }
     } catch (e) {
       console.error("Grading load error:", e);
     } finally {
