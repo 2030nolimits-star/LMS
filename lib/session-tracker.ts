@@ -1,9 +1,7 @@
 "use client"
 
 import type { User, UserRole } from "./types"
-
-const STORAGE_KEY = "edura_active_sessions_v1"
-const HEARTBEAT_MAX_AGE_MS = 5 * 60 * 1000
+import { supabase } from "./supabase"
 
 export interface ActiveSession {
   userId: string
@@ -13,54 +11,67 @@ export interface ActiveSession {
   lastSeenAt: string
 }
 
-function canUseStorage() {
-  return typeof window !== "undefined"
-}
+let activeSessionsCache: ActiveSession[] = []
+let presenceChannel: any = null
 
 export function getActiveSessions(): ActiveSession[] {
-  if (!canUseStorage()) return []
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-
-    const parsed = JSON.parse(raw) as ActiveSession[]
-    const now = Date.now()
-    const fresh = parsed.filter((session) => {
-      const age = now - new Date(session.lastSeenAt).getTime()
-      return Number.isFinite(age) && age <= HEARTBEAT_MAX_AGE_MS
-    })
-
-    if (fresh.length !== parsed.length) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh))
-    }
-
-    return fresh
-  } catch {
-    return []
-  }
+  return activeSessionsCache
 }
 
 export function upsertActiveSession(user: User) {
-  if (!canUseStorage()) return
+  if (typeof window === "undefined") return
 
-  const sessions = getActiveSessions().filter((s) => s.userId !== user.id)
-  sessions.push({
-    userId: user.id,
-    name: user.name,
-    role: user.role,
-    status: user.status,
-    lastSeenAt: new Date().toISOString(),
-  })
-
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+  if (!presenceChannel) {
+    presenceChannel = supabase.channel('online-users')
+    
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState()
+        const sessions: ActiveSession[] = []
+        for (const id in state) {
+          state[id].forEach((presence: any) => {
+            sessions.push({
+              userId: presence.userId,
+              name: presence.name,
+              role: presence.role,
+              status: presence.status,
+              lastSeenAt: presence.lastSeenAt
+            })
+          })
+        }
+        activeSessionsCache = sessions
+      })
+      .subscribe(async (status: string) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({
+            userId: user.id,
+            name: user.name,
+            role: user.role,
+            status: user.status,
+            lastSeenAt: new Date().toISOString()
+          })
+        }
+      })
+  } else {
+    // If already initialized, just update track
+    try {
+      presenceChannel.track({
+        userId: user.id,
+        name: user.name,
+        role: user.role,
+        status: user.status,
+        lastSeenAt: new Date().toISOString()
+      })
+    } catch (e) {
+      // Ignore errors if not connected
+    }
+  }
 }
 
 export function removeActiveSession(userId: string) {
-  // For demo purposes, we do not remove the session on logout.
-  // This allows you to log out as a student and log in as a teacher
-  // in the same browser to see the student still "online".
-  if (!canUseStorage()) return
-  // const sessions = getActiveSessions().filter((session) => session.userId !== userId)
-  // window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+  if (presenceChannel) {
+    presenceChannel.untrack()
+    presenceChannel.unsubscribe()
+    presenceChannel = null
+  }
 }
