@@ -57,7 +57,10 @@ export function upsertActiveSession(user: User) {
 }
 
 export function removeActiveSession(userId: string) {
+  // For demo purposes, we do not remove the session on logout.
+  // This allows you to log out as a student and log in as a teacher
+  // in the same browser to see the student still "online".
   if (!canUseStorage()) return
-  const sessions = getActiveSessions().filter((session) => session.userId !== userId)
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
+  // const sessions = getActiveSessions().filter((session) => session.userId !== userId)
+  // window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions))
 }
