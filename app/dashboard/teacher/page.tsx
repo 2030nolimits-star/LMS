@@ -64,15 +64,21 @@ export default function TeacherDashboard() {
 
     const refreshOnlineStudents = () => {
       const sessions = getActiveSessions().filter(
-        (session) => session.role === "student" && session.status === "active"
+        (session) => session.role === "student"
       )
       setOnlineStudents(sessions)
     }
 
     refreshOnlineStudents()
     const refreshTimer = window.setInterval(refreshOnlineStudents, 15000)
+    
+    // Listen for immediate updates from Supabase Realtime
+    window.addEventListener('edura-sessions-updated', refreshOnlineStudents)
 
-    return () => window.clearInterval(refreshTimer)
+    return () => {
+      window.clearInterval(refreshTimer)
+      window.removeEventListener('edura-sessions-updated', refreshOnlineStudents)
+    }
   }, [currentUser])
 
   if (!currentUser) return null

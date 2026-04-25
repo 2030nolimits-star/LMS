@@ -13,6 +13,7 @@ export interface ActiveSession {
 
 let activeSessionsCache: ActiveSession[] = []
 let presenceChannel: any = null
+let trackedUser: User | null = null;
 
 export function getActiveSessions(): ActiveSession[] {
   return activeSessionsCache
@@ -20,9 +21,17 @@ export function getActiveSessions(): ActiveSession[] {
 
 export function upsertActiveSession(user: User) {
   if (typeof window === "undefined") return
+  
+  trackedUser = user;
 
   if (!presenceChannel) {
-    presenceChannel = supabase.channel('online-users')
+    presenceChannel = supabase.channel('online-users', {
+      config: {
+        presence: {
+          key: user.id,
+        },
+      },
+    })
     
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
@@ -31,39 +40,43 @@ export function upsertActiveSession(user: User) {
         for (const id in state) {
           state[id].forEach((presence: any) => {
             sessions.push({
-              userId: presence.userId,
-              name: presence.name,
-              role: presence.role,
-              status: presence.status,
-              lastSeenAt: presence.lastSeenAt
+              userId: presence.userId || id,
+              name: presence.name || "Unknown",
+              role: presence.role || "student",
+              status: presence.status || "active",
+              lastSeenAt: presence.lastSeenAt || new Date().toISOString()
             })
           })
         }
-        activeSessionsCache = sessions
+        
+        // Remove duplicates just in case
+        const unique = Array.from(new Map(sessions.map(s => [s.userId, s])).values());
+        activeSessionsCache = unique;
+        
+        // Dispatch event so UI can update immediately
+        window.dispatchEvent(new CustomEvent('edura-sessions-updated'));
       })
       .subscribe(async (status: string) => {
-        if (status === 'SUBSCRIBED') {
+        if (status === 'SUBSCRIBED' && trackedUser) {
           await presenceChannel.track({
-            userId: user.id,
-            name: user.name,
-            role: user.role,
-            status: user.status,
+            userId: trackedUser.id,
+            name: trackedUser.name,
+            role: trackedUser.role,
+            status: trackedUser.status,
             lastSeenAt: new Date().toISOString()
           })
         }
       })
   } else {
-    // If already initialized, just update track
-    try {
+    // If already initialized and connected, update track
+    if (presenceChannel.state === 'joined' && trackedUser) {
       presenceChannel.track({
-        userId: user.id,
-        name: user.name,
-        role: user.role,
-        status: user.status,
+        userId: trackedUser.id,
+        name: trackedUser.name,
+        role: trackedUser.role,
+        status: trackedUser.status,
         lastSeenAt: new Date().toISOString()
-      })
-    } catch (e) {
-      // Ignore errors if not connected
+      }).catch(() => {})
     }
   }
 }
@@ -71,7 +84,5 @@ export function upsertActiveSession(user: User) {
 export function removeActiveSession(userId: string) {
   if (presenceChannel) {
     presenceChannel.untrack()
-    presenceChannel.unsubscribe()
-    presenceChannel = null
   }
 }

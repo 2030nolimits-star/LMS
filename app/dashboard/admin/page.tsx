@@ -58,7 +58,12 @@ export default function AdminDashboard() {
 
     refreshOnlineStudents()
     const timer = window.setInterval(refreshOnlineStudents, 15000)
-    return () => window.clearInterval(timer)
+    window.addEventListener('edura-sessions-updated', refreshOnlineStudents)
+
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('edura-sessions-updated', refreshOnlineStudents)
+    }
   }, [])
 
   async function loadData() {
