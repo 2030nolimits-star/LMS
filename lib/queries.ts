@@ -212,10 +212,14 @@ export async function createProfile(profileData: any) {
   // In a real production app, this would use the Admin Auth API to create a user.
   // For this delivery, we create a profile entry. 
   // We'll generate a random UUID for the profile if no auth user is linked yet.
+  
+  // Remove camelCase fields that shouldn't be sent to the DB
+  const { registrationNumber, ...restData } = profileData;
+
   const { data, error } = await supabase
     .from("profiles")
     .insert([{
-      ...profileData,
+      ...restData,
       id: profileData.id || crypto.randomUUID(),
       status: profileData.status || 'active',
       registration_number: profileData.registrationNumber
