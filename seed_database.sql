@@ -15,11 +15,16 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='color') THEN
         ALTER TABLE public.courses ADD COLUMN color TEXT DEFAULT 'hsl(270, 80%, 70%)';
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='submissions' AND column_name='content') THEN
+        ALTER TABLE public.submissions ADD COLUMN content TEXT;
+    END IF;
 END $$;
 
 -- 2. DISABLE FOREIGN KEY TO AUTH AND RLS (For Demo Purposes)
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.submissions DISABLE ROW LEVEL SECURITY;
 
 -- 3. DEFINE IDS & INSERT DATA
 DO $$ 
