@@ -61,6 +61,24 @@ export default function RegisterPage() {
       if (error) {
         toast.error(error.message);
       } else {
+        if (data.user) {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert([{
+              id: data.user.id,
+              email: formData.email,
+              name: `${formData.firstName} ${formData.lastName}`,
+              role: formData.role,
+              registration_number: formData.regNum,
+              department: formData.department,
+              status: "pending"
+            }]);
+            
+          if (profileError) {
+            console.error("Profile creation error:", profileError);
+          }
+        }
+
         toast.success("Registration successful! Your account is pending admin approval.");
         router.push("/login");
       }
