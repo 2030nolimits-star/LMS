@@ -17,8 +17,9 @@ BEGIN
     END IF;
 END $$;
 
--- 2. DISABLE FOREIGN KEY TO AUTH (For Demo Purposes)
+-- 2. DISABLE FOREIGN KEY TO AUTH AND RLS (For Demo Purposes)
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 
 -- 3. DEFINE IDS & INSERT DATA
 DO $$ 
