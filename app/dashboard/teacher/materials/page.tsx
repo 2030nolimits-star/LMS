@@ -90,8 +90,9 @@ export default function TeacherMaterialsPage() {
       setFileName("");
       setSelectedFile(null);
       loadData();
-    } catch (e) {
-      toast.error("Upload failed");
+    } catch (e: any) {
+      console.error("Upload error:", e);
+      toast.error(e.message || "Upload failed. Check if storage buckets 'materials' exist.");
     } finally {
       setUploading(false);
     }

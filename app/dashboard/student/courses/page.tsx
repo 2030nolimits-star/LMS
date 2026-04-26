@@ -117,7 +117,8 @@ export default function StudentCoursesPage() {
       setSelectedFile(null);
       loadData();
     } catch (e: any) {
-      toast.error(e.message || "Failed to submit assignment");
+      console.error("Submission error:", e);
+      toast.error(e.message || "Failed to submit assignment. Check storage bucket 'submissions'.");
     } finally {
       setSubmitting(false);
     }
