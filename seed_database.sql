@@ -36,13 +36,14 @@ ALTER TABLE public.attendance DISABLE ROW LEVEL SECURITY;
 -- 3. DEFINE IDS & INSERT DATA
 DO $$ 
 DECLARE 
-    teacher_thompson_id UUID := gen_random_uuid();
-    teacher_carter_id UUID := gen_random_uuid();
-    student_alice_id UUID := gen_random_uuid();
-    student_bob_id UUID := gen_random_uuid();
-    course_ds_id UUID := gen_random_uuid();
-    course_math_id UUID := gen_random_uuid();
-    assign_1_id UUID := gen_random_uuid();
+    admin_id UUID := 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
+    teacher_thompson_id UUID := 't1t1t1t1-t1t1-t1t1-t1t1-t1t1t1t1t1t1';
+    teacher_carter_id UUID := 't2t2t2t2-t2t2-t2t2-t2t2-t2t2t2t2t2t2';
+    student_alice_id UUID := 'u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1';
+    student_bob_id UUID := 'u2u2u2u2-u2u2-u2u2-u2u2-u2u2u2u2u2u2';
+    course_ds_id UUID := 'c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1';
+    course_math_id UUID := 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2';
+    assign_1_id UUID := 'a1a1a1a1-1111-1111-1111-111111111111';
 BEGIN
 
 -- CLEANUP OLD DEMO DATA (Keep real user data if any)
