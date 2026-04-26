@@ -67,6 +67,8 @@ export default function TeacherChatPage() {
       const msg = await sendMessage(currentUser.id, activeConversation.other.id, newMessage);
       setMessages([...messages, msg]);
       setNewMessage("");
+      // Refresh conversation list to show this person in the sidebar
+      loadData();
     } catch (e) {
       console.error(e);
     }
