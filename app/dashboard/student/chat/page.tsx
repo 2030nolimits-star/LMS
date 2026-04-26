@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Search, MoreVertical, Send, Smile, Paperclip, Loader2 } from "lucide-react"
 import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/queries"
+import { supabase } from "@/lib/supabase"
 import type { User } from "@/lib/types"
 
 export default function StudentChatPage() {
@@ -40,6 +41,21 @@ export default function StudentChatPage() {
   useEffect(() => {
     if (activeConversation && currentUser) {
       getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+
+      // Subscribe to real-time messages for this conversation
+      const channel = supabase
+        .channel(`chat_${activeConversation.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `or(and(sender_id.eq.${currentUser.id},receiver_id.eq.${activeConversation.other.id}),and(sender_id.eq.${activeConversation.other.id},receiver_id.eq.${currentUser.id}))`
+        }, (payload) => {
+          setMessages(prev => [...prev, payload.new]);
+        })
+        .subscribe();
+
+      return () => { supabase.removeChannel(channel) };
     }
   }, [activeConversation, currentUser])
 
