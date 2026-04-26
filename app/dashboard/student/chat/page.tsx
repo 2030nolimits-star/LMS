@@ -44,14 +44,26 @@ export default function StudentChatPage() {
 
       // Subscribe to real-time messages for this conversation
       const channel = supabase
-        .channel(`chat_${activeConversation.id}`)
+        .channel(`chat_messages`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
-          table: 'messages',
-          filter: `or(and(sender_id.eq.${currentUser.id},receiver_id.eq.${activeConversation.other.id}),and(sender_id.eq.${activeConversation.other.id},receiver_id.eq.${currentUser.id}))`
+          table: 'messages'
         }, (payload) => {
-          setMessages(prev => [...prev, payload.new]);
+          const newMsg = payload.new;
+          // Only add the message if it belongs to the current active conversation
+          if (
+            (newMsg.sender_id === currentUser.id && newMsg.receiver_id === activeConversation.other.id) ||
+            (newMsg.sender_id === activeConversation.other.id && newMsg.receiver_id === currentUser.id)
+          ) {
+            setMessages(prev => {
+              // Avoid duplicates
+              if (prev.some(m => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
+          // Also refresh conversation list for the sidebar
+          loadData();
         })
         .subscribe();
 
