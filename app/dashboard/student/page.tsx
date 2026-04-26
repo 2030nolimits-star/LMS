@@ -55,13 +55,14 @@ export default function StudentDashboard() {
           setLiveClasses(lcData.length > 0 ? lcData : mockLiveClasses.filter(lc => lc.status !== "ended"))
         } else {
           // Fallback for demo: show premium mock data if DB is empty
-          setCourses(mockCourses.slice(0, 3))
-          setGrades(mockGrades.filter(g => g.studentId === "u1"))
+          const studentCourses = mockCourses.filter(c => currentUser!.enrolledCourses?.includes(c.id))
+          setCourses(studentCourses.length > 0 ? studentCourses : mockCourses.slice(0, 3))
+          setGrades(mockGrades.filter(g => g.studentId === currentUser!.id))
           setLiveClasses(mockLiveClasses.filter(lc => lc.status !== "ended"))
           
-          const aliceAtt = mockAttendance.filter(a => a.studentId === "u1")
-          const present = aliceAtt.filter(a => a.status === "present").length
-          setAttendanceRate(aliceAtt.length > 0 ? `${Math.round((present / aliceAtt.length) * 100)}%` : "94%")
+          const studentAtt = mockAttendance.filter(a => a.studentId === currentUser!.id)
+          const present = studentAtt.filter(a => a.status === "present").length
+          setAttendanceRate(studentAtt.length > 0 ? `${Math.round((present / studentAtt.length) * 100)}%` : "94%")
         }
       } catch(e) {
         console.error(e)

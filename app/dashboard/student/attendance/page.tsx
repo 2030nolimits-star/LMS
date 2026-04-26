@@ -35,9 +35,9 @@ export default function StudentAttendancePage() {
           setAttendance(attData)
           setCourses(courseData)
         } else {
-          // Fallback for demo: Alice's data
-          setAttendance(mockAttRecords.filter(a => a.studentId === 'u1'))
-          setCourses(mockCourses.slice(0, 3))
+          // Fallback for demo: dynamic mock data based on logged-in user
+          setAttendance(mockAttRecords.filter(a => a.studentId === currentUser!.id))
+          setCourses(mockCourses.filter(c => currentUser!.enrolledCourses?.includes(c.id)).slice(0, 4))
         }
       } catch(e) {
         console.error(e)
