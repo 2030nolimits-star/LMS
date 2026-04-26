@@ -284,13 +284,17 @@ export async function getConversations(userId: string) {
     .from("messages")
     .select(`
       *,
-      sender:profiles!messages_sender_id_fkey(id, name, role, avatar),
-      receiver:profiles!messages_receiver_id_fkey(id, name, role, avatar)
+      sender:sender_id(id, name, role, avatar),
+      receiver:receiver_id(id, name, role, avatar)
     `)
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
-  if (error || !data) return [];
+  if (error || !data) {
+    console.error("getConversations error:", error);
+    return [];
+  }
+  
   const convMap = new Map();
   data.forEach(msg => {
     const other = msg.sender_id === userId ? msg.receiver : msg.sender;
@@ -318,10 +322,19 @@ export async function getMessages(userId: string, otherId: string) {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
-    .or(`and(sender_id.eq.${userId},receiver_id.eq.${otherId}),and(sender_id.eq.${otherId},receiver_id.eq.${userId})`)
+    .or(`sender_id.eq.${userId},sender_id.eq.${otherId}`)
     .order("created_at", { ascending: true });
 
-  return (data || []) as any[];
+  if (error) {
+    console.error("getMessages error:", error);
+    return [];
+  }
+
+  // Filter for only messages between these two users
+  return (data || []).filter(msg => 
+    (msg.sender_id === userId && msg.receiver_id === otherId) ||
+    (msg.sender_id === otherId && msg.receiver_id === userId)
+  );
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {

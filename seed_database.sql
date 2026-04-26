@@ -36,6 +36,16 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='submissions' AND column_name='file_name') THEN
         ALTER TABLE public.submissions ADD COLUMN file_name TEXT;
     END IF;
+
+    -- Ensure messages table exists
+    CREATE TABLE IF NOT EXISTS public.messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sender_id UUID REFERENCES public.profiles(id) NOT NULL,
+        receiver_id UUID REFERENCES public.profiles(id) NOT NULL,
+        content TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+    );
 END $$;
 
 -- 2. DISABLE FOREIGN KEY TO AUTH AND RLS (For Demo Purposes)
