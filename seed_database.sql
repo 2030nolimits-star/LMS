@@ -104,14 +104,13 @@ VALUES
 (course_math_id, 'Linear Algebra', 'MATH-301', 'Matrices and vector spaces analysis.', teacher_carter_id, 'hsl(160, 60%, 45%)', 'Spring 2026', 3),
 (course_physics_id, 'Quantum Physics', 'PHYS-202', 'Introduction to quantum mechanics and relativity.', teacher_carter_id, 'hsl(280, 70%, 60%)', 'Spring 2026', 4);
 
--- INITIAL ENROLLMENTS (Alice enrolled in all)
+-- INITIAL ENROLLMENTS
 INSERT INTO public.enrollments (course_id, student_id)
 VALUES 
-(course_ds_id, s1),
-(course_math_id, s1),
-(course_physics_id, s1),
-(course_ds_id, s2),
-(course_ds_id, s3);
+(course_ds_id, s1), (course_math_id, s1), (course_physics_id, s1),
+(course_ds_id, s2), (course_ds_id, s3),
+(course_ds_id, s4), (course_math_id, s4),
+(course_ds_id, s5), (course_math_id, s5);
 
 -- LIVE CLASSES
 INSERT INTO public.live_classes (id, course_id, title, scheduled_at, duration, status, teacher_id)
@@ -128,7 +127,19 @@ VALUES
 -- SUBMISSIONS
 INSERT INTO public.submissions (id, student_id, assignment_id, submitted_at, grade, feedback, status)
 VALUES 
-(gen_random_uuid(), s1, assign_1_id, now() - interval '1 day', 92, 'Solid implementation.', 'graded');
+(gen_random_uuid(), s1, assign_1_id, now() - interval '1 day', 92, 'Solid implementation.', 'graded'),
+(gen_random_uuid(), s4, assign_1_id, now() - interval '1 day', 95, 'Excellent trees.', 'graded'),
+(gen_random_uuid(), s5, assign_1_id, now() - interval '1 day', 98, 'Perfect logic.', 'graded');
+
+-- ATTENDANCE
+INSERT INTO public.attendance (student_id, course_id, date, status, marked_by)
+VALUES 
+(s1, course_ds_id, now()::date, 'present', 'auto'),
+(s2, course_ds_id, now()::date, 'present', 'auto'),
+(s4, course_ds_id, now()::date, 'present', 'manual'),
+(s5, course_ds_id, now()::date, 'present', 'manual'),
+(s4, course_math_id, now()::date, 'present', 'auto'),
+(s5, course_math_id, now()::date, 'late', 'manual');
 
 -- MESSAGES
 INSERT INTO public.messages (id, sender_id, receiver_id, content, is_read, created_at)

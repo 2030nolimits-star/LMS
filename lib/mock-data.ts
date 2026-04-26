@@ -54,7 +54,7 @@ export const users: User[] = [
     registrationNumber: "STU-2026-009",
     role: "student",
     avatar: "HP",
-    enrolledCourses: [],
+    enrolledCourses: ["c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2"],
     department: "Computer Science",
     joinedAt: "2025-09-01",
     status: "active",
@@ -66,7 +66,7 @@ export const users: User[] = [
     registrationNumber: "STU-2026-007",
     role: "student",
     avatar: "TP",
-    enrolledCourses: [],
+    enrolledCourses: ["c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2"],
     department: "Computer Science",
     joinedAt: "2025-09-01",
     status: "active",
@@ -350,13 +350,20 @@ export const attendanceRecords: AttendanceRecord[] = [
   // CS-433
   { id: "att1", studentId: "11111111-1111-1111-1111-111111111111", studentName: "Alice Johnson", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "present", markedBy: "auto" },
   { id: "att2", studentId: "22222222-2222-2222-2222-222222222222", studentName: "Bob Smith", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "present", markedBy: "auto" },
-  { id: "att3", studentId: "33333333-3333-3333-3333-333333333333", studentName: "Charlie Brown", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "late", markedBy: "manual" },
+  { id: "att3", studentId: "33333333-3333-3333-3333-333333333333", studentName: "Veer Patel", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "present", markedBy: "manual" },
+  { id: "att4", studentId: "44444444-4444-4444-4444-444444444444", studentName: "Het Pandya", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "present", markedBy: "manual" },
+  { id: "att5", studentId: "55555555-5555-5555-5555-555555555555", studentName: "Trushi Kirankumar Patel", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", date: "2026-02-03", status: "present", markedBy: "manual" },
+  // MATH-301
+  { id: "att6", studentId: "44444444-4444-4444-4444-444444444444", studentName: "Het Pandya", courseId: "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2", courseName: "Linear Algebra", date: "2026-02-04", status: "present", markedBy: "auto" },
+  { id: "att7", studentId: "55555555-5555-5555-5555-555555555555", studentName: "Trushi Kirankumar Patel", courseId: "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2", courseName: "Linear Algebra", date: "2026-02-04", status: "late", markedBy: "manual" },
 ]
 
 // ─── Grades ─────────────────────────────────────────────────────────
 export const grades: Grade[] = [
   { id: "g1", studentId: "11111111-1111-1111-1111-111111111111", studentName: "Alice Johnson", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", courseCode: "CS-433", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", assignmentTitle: "Assignment 1: Trees", score: 95, maxScore: 100, feedback: "Excellent work! Clean code structure.", gradedAt: "2026-02-03" },
   { id: "g2", studentId: "22222222-2222-2222-2222-222222222222", studentName: "Bob Smith", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", courseCode: "CS-433", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", assignmentTitle: "Assignment 1: Trees", score: 88, maxScore: 100, feedback: "Good effort. Consider adding more comments.", gradedAt: "2026-02-03" },
+  { id: "g3", studentId: "44444444-4444-4444-4444-444444444444", studentName: "Het Pandya", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", courseCode: "CS-433", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", assignmentTitle: "Assignment 1: Trees", score: 92, maxScore: 100, feedback: "Great work on the logic.", gradedAt: "2026-02-05" },
+  { id: "g4", studentId: "55555555-5555-5555-5555-555555555555", studentName: "Trushi Kirankumar Patel", courseId: "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1", courseName: "Data Structures & Algorithms", courseCode: "CS-433", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", assignmentTitle: "Assignment 1: Trees", score: 98, maxScore: 100, feedback: "Exceptional code quality.", gradedAt: "2026-02-05" },
 ]
 
 // ─── Chat ────────────────────────────────────────────────────────────
