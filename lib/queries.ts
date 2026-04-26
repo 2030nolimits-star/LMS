@@ -481,6 +481,16 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
   return data;
 }
 
+export async function deleteMaterial(id: string) {
+  const { error } = await supabase
+    .from("materials")
+    .delete()
+    .eq("id", id);
+  
+  if (error) throw error;
+  return true;
+}
+
 export async function submitAssignmentWithFile(submissionData: any, file?: File) {
   let fileUrl = "";
   let fileName = "";

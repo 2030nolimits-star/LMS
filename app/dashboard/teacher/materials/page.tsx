@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select"
 import { FileText, Video, File, Presentation, Plus, Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { getTeacherCourses, uploadMaterial } from "@/lib/queries"
+import { getTeacherCourses, uploadMaterial, deleteMaterial } from "@/lib/queries"
 import type { Course, Material } from "@/lib/types"
 import { courses as mockCourses } from "@/lib/mock-data"
 import { useEffect } from "react"
@@ -95,6 +95,17 @@ export default function TeacherMaterialsPage() {
       toast.error(e.message || "Upload failed. Check if storage buckets 'materials' exist.");
     } finally {
       setUploading(false);
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this material?")) return;
+    try {
+      await deleteMaterial(id);
+      toast.success("Material deleted successfully");
+      loadData();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to delete material");
     }
   }
 
@@ -285,7 +296,12 @@ export default function TeacherMaterialsPage() {
                         </a>
                       </Button>
                     )}
-                    <Button variant="ghost" size="sm" className="text-destructive">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-destructive"
+                      onClick={() => handleDelete(mat.id)}
+                    >
                       Delete
                     </Button>
                   </CardContent>
