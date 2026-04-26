@@ -431,20 +431,26 @@ export async function getUnreadNotificationCount(userId: string) {
 export async function uploadMaterial(materialData: Partial<Material>, file?: File) {
   let fileUrl = "";
 
+  const courseId = materialData.courseId || (materialData as any).course_id;
+  if (!courseId) throw new Error("Course ID is required to upload materials.");
+
   if (file) {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
-    // Support either courseId or course_id depending on how it's passed
-    const courseId = materialData.courseId || (materialData as any).course_id;
+    // Sanitize filename: remove non-alphanumeric except dots/dashes
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `${Math.random().toString(36).substring(2, 7)}_${sanitizedName}`;
     const filePath = `${courseId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('materials')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
 
     if (uploadError) {
       console.error("Storage upload error:", uploadError);
-      throw new Error(`Failed to upload file: ${uploadError.message}. Make sure you have a public 'materials' storage bucket created in Supabase.`);
+      throw new Error(`Storage Error: ${uploadError.message}. Ensure you have created a PUBLIC bucket named 'materials' in your Supabase project.`);
     }
 
     const { data: { publicUrl } } = supabase.storage
@@ -457,9 +463,9 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
   const insertData = {
     title: materialData.title,
     type: materialData.type,
-    course_id: materialData.courseId || (materialData as any).course_id,
-    file_size: (materialData as any).file_size || (materialData as any).size,
-    file_url: fileUrl || (materialData as any).file_url
+    course_id: courseId,
+    file_size: (materialData as any).file_size || (materialData as any).size || "0 MB",
+    file_url: fileUrl || (materialData as any).file_url || ""
   };
 
   const { data, error } = await supabase
@@ -468,7 +474,10 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Database insert error:", error);
+    throw new Error(`Database Error: ${error.message}. If you are using a demo course (e.g. 'c1'), please create a real course first.`);
+  }
   return data;
 }
 
@@ -476,19 +485,30 @@ export async function submitAssignmentWithFile(submissionData: any, file?: File)
   let fileUrl = "";
   let fileName = "";
 
+  const studentId = submissionData.student_id || submissionData.studentId;
+  const assignmentId = submissionData.assignment_id || submissionData.assignmentId;
+
+  if (!studentId || !assignmentId) {
+    throw new Error("Student ID and Assignment ID are required for submission.");
+  }
+
   if (file) {
     const fileExt = file.name.split('.').pop();
-    const uniqueId = Math.random().toString(36).substring(2, 15);
-    const pathName = `${submissionData.student_id}/${submissionData.assignment_id}_${uniqueId}.${fileExt}`;
+    const uniqueId = Math.random().toString(36).substring(2, 7);
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const pathName = `${studentId}/${assignmentId}_${uniqueId}_${sanitizedName}`;
     fileName = file.name;
 
     const { error: uploadError } = await supabase.storage
       .from('submissions')
-      .upload(pathName, file);
+      .upload(pathName, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
 
     if (uploadError) {
       console.error("Storage upload error:", uploadError);
-      throw new Error(`Failed to upload file: ${uploadError.message}. Make sure you have a public 'submissions' storage bucket created in Supabase.`);
+      throw new Error(`Storage Error: ${uploadError.message}. Ensure you have created a PUBLIC bucket named 'submissions' in your Supabase project.`);
     }
 
     const { data: { publicUrl } } = supabase.storage
@@ -501,9 +521,9 @@ export async function submitAssignmentWithFile(submissionData: any, file?: File)
   const { data, error } = await supabase
     .from("submissions")
     .insert([{
-      student_id: submissionData.student_id || submissionData.studentId,
-      assignment_id: submissionData.assignment_id || submissionData.assignmentId,
-      content: submissionData.content,
+      student_id: studentId,
+      assignment_id: assignmentId,
+      content: submissionData.content || "",
       status: submissionData.status || "submitted",
       submitted_at: submissionData.submitted_at || new Date().toISOString(),
       file_url: fileUrl || null,
@@ -512,7 +532,10 @@ export async function submitAssignmentWithFile(submissionData: any, file?: File)
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Database submission error:", error);
+    throw new Error(`Database Error: ${error.message}`);
+  }
   return data;
 }
 
