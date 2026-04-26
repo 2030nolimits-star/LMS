@@ -1,7 +1,16 @@
 -- LMS SEED SCRIPT (Realistic Demo Data + Schema Fix)
 -- Run this in the Supabase SQL Editor
 
--- 1. REPAIR SCHEMA (Add missing columns to courses if they don't exist)
+-- 1. REPAIR STORAGE & SCHEMA
+-- Ensure storage buckets exist and are public
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('materials', 'materials', true), ('submissions', 'submissions', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Relax storage policies for demo purposes
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
+CREATE POLICY "Public Access" ON storage.objects FOR ALL USING (true) WITH CHECK (true);
+
 DO $$ 
 BEGIN 
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='courses' AND column_name='semester') THEN
