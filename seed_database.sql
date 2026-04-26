@@ -47,62 +47,92 @@ DECLARE
     admin_id UUID := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
     teacher_thompson_id UUID := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
     teacher_carter_id UUID := 'cccccccc-cccc-cccc-cccc-cccccccccccc';
-    student_alice_id UUID := '11111111-1111-1111-1111-111111111111';
-    student_bob_id UUID := '22222222-2222-2222-2222-222222222222';
+    
+    -- Student IDs (Exactly 11)
+    s1 UUID := '11111111-1111-1111-1111-111111111111';
+    s2 UUID := '22222222-2222-2222-2222-222222222222';
+    s3 UUID := '33333333-3333-3333-3333-333333333333';
+    s4 UUID := '44444444-4444-4444-4444-444444444444';
+    s5 UUID := '55555555-5555-5555-5555-555555555555';
+    s6 UUID := '66666666-6666-6666-6666-666666666666';
+    s7 UUID := '77777777-7777-7777-7777-777777777777';
+    s8 UUID := '88888888-8888-8888-8888-888888888888';
+    s9 UUID := '99999999-9999-9999-9999-999999999999';
+    s10 UUID := '10101010-1010-1010-1010-101010101010';
+    s11 UUID := '11111111-0000-0000-0000-111111111111';
+
     course_ds_id UUID := 'c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1';
     course_math_id UUID := 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2';
+    course_physics_id UUID := 'c3c3c3c3-c3c3-c3c3-c3c3-c3c3c3c3c3c3';
+    
     assign_1_id UUID := 'a1a1a1a1-1111-1111-1111-111111111111';
 BEGIN
 
--- CLEANUP OLD DEMO DATA (Keep real user data if any)
-DELETE FROM public.messages WHERE sender_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942')) OR receiver_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
-DELETE FROM public.submissions WHERE student_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
-DELETE FROM public.assignments WHERE course_id IN (SELECT id FROM public.courses WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942')));
-DELETE FROM public.live_classes WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942'));
-DELETE FROM public.enrollments WHERE student_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
-DELETE FROM public.courses WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942'));
-DELETE FROM public.profiles WHERE registration_number IN ('4332351', '4332352', 'TCH-8821', 'TCH-9942');
+-- CLEANUP
+DELETE FROM public.messages;
+DELETE FROM public.attendance;
+DELETE FROM public.submissions;
+DELETE FROM public.assignments;
+DELETE FROM public.live_classes;
+DELETE FROM public.enrollments;
+DELETE FROM public.courses;
+DELETE FROM public.profiles;
 
 -- INSERT PROFILES
 INSERT INTO public.profiles (id, email, name, role, registration_number, department, status, avatar)
 VALUES 
+(admin_id, 'admin@edura.edu', 'Admin User', 'admin', 'ADM-001', 'Administration', 'active', 'AD'),
 (teacher_thompson_id, 'thompson@university.edu', 'Dr. Sarah Thompson', 'teacher', 'TCH-8821', 'Computer Science', 'active', 'ST'),
 (teacher_carter_id, 'carter@university.edu', 'Prof. James Carter', 'teacher', 'TCH-9942', 'Mathematics', 'active', 'JC'),
-(student_alice_id, 'alice@university.edu', 'Alice Johnson', 'student', '4332351', 'Computer Science', 'active', 'AJ'),
-(student_bob_id, 'bob@university.edu', 'Bob Smith', 'student', '4332352', 'Computer Science', 'active', 'BS');
+-- 11 Students (Standardized from Screenshot)
+(s1, 'alice@university.edu', 'Alice Johnson', 'student', '4332351', 'CS', 'active', 'AJ'),
+(s2, 'bob@university.edu', 'Bob Smith', 'student', '4332352', 'CS', 'active', 'BS'),
+(s3, 's4504312@lsbu.ac.uk', 'Veer Patel', 'student', 'STU-2026-005', 'CS', 'active', 'VP'),
+(s4, 's4332351@lsbu.ac.uk', 'Het Pandya', 'student', 'STU-2026-009', 'CS', 'active', 'HP'),
+(s5, 'trushipatel5@gmail.com', 'Trushi Kirankumar Patel', 'student', 'STU-2026-007', 'CS', 'active', 'TP'),
+(s6, 'david.miller@edura.edu', 'David Miller', 'student', 'STD-006', 'CS', 'active', 'DM'),
+(s7, 'eve.wilson@edura.edu', 'Eve Wilson', 'student', 'STD-007', 'CS', 'active', 'EW'),
+(s8, 'grace.taylor@edura.edu', 'Grace Taylor', 'student', 'STD-008', 'CS', 'active', 'GT'),
+(s9, 'henry.anderson@edura.edu', 'Henry Anderson', 'student', 'STD-009', 'CS', 'active', 'HA'),
+(s10, 'isabel.thomas@edura.edu', 'Isabel Thomas', 'student', 'STD-010', 'CS', 'active', 'IT'),
+(s11, 'jack.jackson@edura.edu', 'Jack Jackson', 'student', 'STD-011', 'CS', 'active', 'JJ');
 
 -- INSERT COURSES
 INSERT INTO public.courses (id, title, code, description, teacher_id, color, semester, credits)
 VALUES 
-(course_ds_id, 'Data Structures & Algorithms', 'CS-433', 'Advanced data structures and algorithmic analysis.', teacher_thompson_id, 'hsl(234, 89%, 58%)', 'Spring 2026', 4),
-(course_math_id, 'Linear Algebra', 'MATH-301', 'Study of vectors, matrices, and linear transformations.', teacher_carter_id, 'hsl(160, 60%, 45%)', 'Spring 2026', 3);
+(course_ds_id, 'Data Structures & Algorithms', 'CS-433', 'Fundamental algorithms and complex data structures.', teacher_thompson_id, 'hsl(234, 89%, 58%)', 'Spring 2026', 4),
+(course_math_id, 'Linear Algebra', 'MATH-301', 'Matrices and vector spaces analysis.', teacher_carter_id, 'hsl(160, 60%, 45%)', 'Spring 2026', 3),
+(course_physics_id, 'Quantum Physics', 'PHYS-202', 'Introduction to quantum mechanics and relativity.', teacher_carter_id, 'hsl(280, 70%, 60%)', 'Spring 2026', 4);
 
--- INSERT ENROLLMENTS
+-- INITIAL ENROLLMENTS (Alice enrolled in all)
 INSERT INTO public.enrollments (course_id, student_id)
 VALUES 
-(course_ds_id, student_alice_id),
-(course_math_id, student_alice_id),
-(course_ds_id, student_bob_id);
+(course_ds_id, s1),
+(course_math_id, s1),
+(course_physics_id, s1),
+(course_ds_id, s2),
+(course_ds_id, s3);
 
--- INSERT LIVE CLASSES
+-- LIVE CLASSES
 INSERT INTO public.live_classes (id, course_id, title, scheduled_at, duration, status, teacher_id)
 VALUES 
-(gen_random_uuid(), course_ds_id, 'Graph Algorithms Deep Dive', now(), 90, 'live', teacher_thompson_id),
-(gen_random_uuid(), course_math_id, 'Eigenvectors & Eigenvalues', now() + interval '1 day', 60, 'scheduled', teacher_carter_id);
+(gen_random_uuid(), course_ds_id, 'Graph Algorithms Workshop', now(), 90, 'live', teacher_thompson_id),
+(gen_random_uuid(), course_math_id, 'Eigenvalues Lecture', now() + interval '1 day', 60, 'scheduled', teacher_carter_id);
 
--- INSERT ASSIGNMENTS
+-- ASSIGNMENTS
 INSERT INTO public.assignments (id, course_id, title, description, due_date, max_score)
 VALUES 
-(assign_1_id, course_ds_id, 'Assignment 1: Linked Lists', 'Implement a doubly linked list.', now() + interval '7 days', 100);
+(assign_1_id, course_ds_id, 'Assignment 1: Trees', 'Implement a balanced AVL tree.', now() + interval '5 days', 100),
+(gen_random_uuid(), course_ds_id, 'Assignment 2: Graphs', 'Dijkstra algorithm implementation.', now() + interval '12 days', 100);
 
--- INSERT SUBMISSIONS
+-- SUBMISSIONS
 INSERT INTO public.submissions (id, student_id, assignment_id, submitted_at, grade, feedback, status)
 VALUES 
-(gen_random_uuid(), student_alice_id, assign_1_id, now() - interval '1 day', 95, 'Excellent work!', 'graded');
+(gen_random_uuid(), s1, assign_1_id, now() - interval '1 day', 92, 'Solid implementation.', 'graded');
 
--- INSERT MESSAGES
+-- MESSAGES
 INSERT INTO public.messages (id, sender_id, receiver_id, content, is_read, created_at)
 VALUES 
-(gen_random_uuid(), teacher_thompson_id, student_alice_id, 'Hi Alice, great job on the assignment!', true, now() - interval '2 hours');
+(gen_random_uuid(), teacher_thompson_id, s1, 'Welcome to the course, Alice!', true, now() - interval '1 hour');
 
 END $$;

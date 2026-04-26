@@ -17,7 +17,7 @@ import {
   UserPlus,
   Loader2,
 } from "lucide-react"
-import { getAdminDashboardData, updateUserStatus, getAllUsers } from "@/lib/queries"
+import { getAdminDashboardData, updateUserStatus, getAllUsers, getSystemAnalytics } from "@/lib/queries"
 import type { User, LiveClass } from "@/lib/types"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -32,7 +32,8 @@ export default function AdminDashboard() {
     courses: number;
     pending: User[];
     activeLive: LiveClass[];
-    users: User[]; // Added users to state
+    users: User[];
+    analytics: any;
   }>({
     students: 0,
     teachers: 0,
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
     pending: [],
     activeLive: [],
     users: [],
+    analytics: null,
   })
   const [onlineStudents, setOnlineStudents] = useState<ActiveSession[]>([])
 
@@ -69,11 +71,12 @@ export default function AdminDashboard() {
   async function loadData() {
     setLoading(true);
     try {
-      const [stats, allUsers] = await Promise.all([
+      const [stats, allUsers, analytics] = await Promise.all([
         getAdminDashboardData(),
-        getAllUsers()
+        getAllUsers(),
+        getSystemAnalytics()
       ]);
-      setData({ ...stats, users: allUsers as any });
+      setData({ ...stats, users: allUsers as any, analytics });
     } catch (error) {
       console.error("Admin dashboard load error:", error);
     } finally {
@@ -299,6 +302,63 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* System Insights */}
+        {data.analytics && (
+          <div className="grid gap-6 lg:grid-cols-2">
+             <Card className="border-border/50 bg-white/5 overflow-hidden">
+                <CardHeader>
+                   <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-emerald-400" />
+                      Student Engagement (Weekly)
+                   </CardTitle>
+                </CardHeader>
+                <CardContent>
+                   <div className="flex items-end gap-2 h-32 pt-4">
+                      {data.analytics.dailyActiveUsers.map((val: number, i: number) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                           <div 
+                              className="w-full bg-primary/40 rounded-t-sm group-hover:bg-primary transition-colors relative"
+                              style={{ height: `${(val / 80) * 100}%` }}
+                           >
+                              <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-foreground text-background text-[10px] px-1 rounded">
+                                 {val}
+                              </div>
+                           </div>
+                           <span className="text-[10px] text-muted-foreground">D{i+1}</span>
+                        </div>
+                      ))}
+                   </div>
+                </CardContent>
+             </Card>
+
+             <Card className="border-border/50 bg-white/5">
+                <CardHeader>
+                   <CardTitle className="text-sm font-medium">Platform Health</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                   <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                         <span className="text-muted-foreground">Storage Usage</span>
+                         <span className="text-foreground font-medium">{data.analytics.storageUsage}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                         <div className="h-full bg-primary w-[24%]" />
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      <div className="flex justify-between text-xs">
+                         <span className="text-muted-foreground">Avg. Course Grade</span>
+                         <span className="text-foreground font-medium">{data.analytics.avgGrade}</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                         <div className="h-full bg-emerald-400 w-[84.5%]" />
+                      </div>
+                   </div>
+                </CardContent>
+             </Card>
+          </div>
+        )}
 
         {/* Recent users */}
         <Card className="border-border/50">

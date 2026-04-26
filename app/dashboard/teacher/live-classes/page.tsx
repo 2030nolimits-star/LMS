@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Video, Clock, Calendar, Users, Zap, PlayCircle, Loader2, Plus } from "lucide-react"
-import { getTeacherLiveClasses, scheduleLiveClass, getTeacherCourses } from "@/lib/queries"
+import { getTeacherLiveClasses, scheduleLiveClass, getTeacherCourses, updateLiveClassStatus } from "@/lib/queries"
 import type { LiveClass, Course } from "@/lib/types"
 import { courses as mockCourses } from "@/lib/mock-data"
 import {
@@ -95,6 +95,17 @@ export default function TeacherLiveClassesPage() {
     }
   }
 
+  const handleStartClass = async (classId: string) => {
+    try {
+      await updateLiveClassStatus(classId, "live");
+      toast.success("Class is now live!");
+      loadData();
+      // We don't redirect here, let the Start button's Link handle it
+    } catch(e) {
+      toast.error("Failed to start class");
+    }
+  }
+
   if (!currentUser) return null
 
   if (loading) {
@@ -160,18 +171,24 @@ export default function TeacherLiveClassesPage() {
               </Button>
             </Link>
           ) : (
-            <div className="flex gap-2 w-full md:w-auto">
-              <Link href={`/dashboard/teacher/live-classes/${lc.id}`} className="flex-1 md:w-auto">
-                <Button variant="outline" size="sm" className="w-full bg-white/5 border-white/10 text-foreground hover:bg-white/10">
-                   Edit
+              <div className="flex gap-2 w-full md:w-auto">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1 md:w-auto bg-white/5 border-white/10 text-foreground hover:bg-white/10"
+                  asChild
+                >
+                  <Link href={`/dashboard/teacher/live-classes/${lc.id}`}>Edit</Link>
                 </Button>
-              </Link>
-              <Link href={`/dashboard/teacher/live-classes/${lc.id}`} className="flex-1 md:w-auto">
-                <Button size="sm" className="w-full bg-primary text-primary-foreground shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:bg-primary/90">
-                   Start Now
+                <Button 
+                  size="sm" 
+                  className="flex-1 md:w-auto bg-primary text-primary-foreground shadow-[0_0_15px_rgba(168,85,247,0.4)] hover:bg-primary/90"
+                  onClick={() => handleStartClass(lc.id)}
+                  asChild
+                >
+                  <Link href={`/dashboard/teacher/live-classes/${lc.id}`}>Start Now</Link>
                 </Button>
-              </Link>
-            </div>
+              </div>
           )}
         </div>
       </div>

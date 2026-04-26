@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BookOpen, Users, Plus, FileText, Video as VideoIcon, File, Presentation, Clock, Download, Loader2 } from "lucide-react"
-import { getTeacherDashboardData, createCourse } from "@/lib/queries"
+import { getTeacherDashboardData, createCourse, uploadMaterial } from "@/lib/queries"
 import type { Course } from "@/lib/types"
 import {
   Dialog,
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import Link from "next/link"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const materialIcons: Record<string, React.ElementType> = {
   pdf: FileText, video: VideoIcon, document: File, slide: Presentation,
@@ -34,6 +35,12 @@ export default function TeacherCoursesPage() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isUploadOpen, setIsUploadOpen] = useState(false)
+  const [selectedCourseForUpload, setSelectedCourseForUpload] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [materialFile, setMaterialFile] = useState<File | null>(null)
+  const [materialTitle, setMaterialTitle] = useState("")
+  const [materialType, setMaterialType] = useState("pdf")
   
   const [newCourse, setNewCourse] = useState({
     title: "",
@@ -88,6 +95,33 @@ export default function TeacherCoursesPage() {
       toast.error("Failed to create course")
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleUploadMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCourseForUpload || !materialTitle || !materialFile) {
+      toast.error("Please fill all fields and select a file");
+      return;
+    }
+    setUploading(true);
+    try {
+      await uploadMaterial({
+        courseId: selectedCourseForUpload,
+        title: materialTitle,
+        type: materialType,
+        size: `${(materialFile.size / (1024 * 1024)).toFixed(1)} MB`,
+        uploadedAt: new Date().toISOString()
+      }, materialFile);
+      toast.success("Material uploaded successfully!");
+      setIsUploadOpen(false);
+      setMaterialTitle("");
+      setMaterialFile(null);
+      loadCourses();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to upload material");
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -154,6 +188,43 @@ export default function TeacherCoursesPage() {
 
         </div>
 
+        <Dialog open={isUploadOpen} onOpenChange={setIsUploadOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload Course Material</DialogTitle>
+              <DialogDescription>Add new resources for your students.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUploadMaterial} className="flex flex-col gap-4">
+               <div className="flex flex-col gap-2">
+                 <Label>Title</Label>
+                 <Input required placeholder="e.g. Lecture 1 Notes" value={materialTitle} onChange={e => setMaterialTitle(e.target.value)} />
+               </div>
+               <div className="flex flex-col gap-2">
+                 <Label>Type</Label>
+                 <Select value={materialType} onValueChange={setMaterialType}>
+                   <SelectTrigger>
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="pdf">PDF Document</SelectItem>
+                     <SelectItem value="video">Video Lecture</SelectItem>
+                     <SelectItem value="slide">Presentation Slide</SelectItem>
+                     <SelectItem value="document">Other Document</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div className="flex flex-col gap-2">
+                 <Label>File</Label>
+                 <Input type="file" required onChange={e => setMaterialFile(e.target.files?.[0] || null)} />
+               </div>
+               <Button type="submit" disabled={uploading}>
+                 {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plus className="mr-2 h-4 w-4" />}
+                 Upload Material
+               </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         {courses.length === 0 ? (
           <div className="glass-card flex flex-col items-center py-16 px-4 text-center">
             <BookOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
@@ -195,6 +266,14 @@ export default function TeacherCoursesPage() {
 
                 <TabsContent value="materials" className="mt-3">
                    <div className="flex flex-col gap-2">
+                     <div className="flex justify-end mb-2">
+                        <Button size="sm" variant="outline" className="h-8 border-dashed border-white/20 hover:bg-white/5" onClick={() => {
+                           setSelectedCourseForUpload(course.id);
+                           setIsUploadOpen(true);
+                        }}>
+                           <Plus className="h-3 w-3 mr-1" /> Add Material
+                        </Button>
+                     </div>
                      {materials.length === 0 && <p className="text-sm text-muted-foreground p-2">No materials uploaded yet.</p>}
                      {materials.map((mat) => {
                        const Icon = materialIcons[mat.type] || File
