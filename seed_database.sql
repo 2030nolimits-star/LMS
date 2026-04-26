@@ -47,23 +47,23 @@ BEGIN
         is_read BOOLEAN DEFAULT false,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
     );
+END $$;
 
-    -- Enable Realtime for messages (Manual check since ALTER PUBLICATION can't be in a block easily)
-    COMMIT; -- End current transaction to allow publication alter
-    
-    DO $$
-    BEGIN
+-- Enable Realtime for messages (Outside main block)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
         IF NOT EXISTS (
             SELECT 1 FROM pg_publication_tables 
             WHERE pubname = 'supabase_realtime' 
             AND schemaname = 'public' 
             AND tablename = 'messages'
         ) THEN
-            ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+            EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.messages';
         END IF;
-    EXCEPTION WHEN OTHERS THEN
-        -- Fallback if publication doesn't exist
-    END $$;
+    END IF;
+EXCEPTION WHEN OTHERS THEN
+    -- Handle gracefully
 END $$;
 
 -- 2. DISABLE FOREIGN KEY TO AUTH AND RLS (For Demo Purposes)
