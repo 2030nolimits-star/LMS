@@ -12,7 +12,7 @@ import type {
 // ─── Users ──────────────────────────────────────────────────────────
 export const users: User[] = [
   {
-    id: "u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1",
+    id: "11111111-1111-1111-1111-111111111111",
     name: "Alice Johnson",
     email: "alice@university.edu",
     registrationNumber: "4332351",
@@ -24,7 +24,7 @@ export const users: User[] = [
     status: "active",
   },
   {
-    id: "u2u2u2u2-u2u2-u2u2-u2u2-u2u2u2u2u2u2",
+    id: "22222222-2222-2222-2222-222222222222",
     name: "Bob Smith",
     email: "bob@university.edu",
     registrationNumber: "4332352",
@@ -108,7 +108,7 @@ export const users: User[] = [
     status: "pending",
   },
   {
-    id: "t1t1t1t1-t1t1-t1t1-t1t1-t1t1t1t1t1t1",
+    id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     name: "Dr. Sarah Thompson",
     email: "thompson@university.edu",
     registrationNumber: "TCH-8821",
@@ -119,7 +119,7 @@ export const users: User[] = [
     status: "active",
   },
   {
-    id: "t2t2t2t2-t2t2-t2t2-t2t2-t2t2t2t2t2t2",
+    id: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     name: "Prof. James Carter",
     email: "carter@university.edu",
     registrationNumber: "TCH-9942",
@@ -130,7 +130,7 @@ export const users: User[] = [
     status: "active",
   },
   {
-    id: "a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1",
+    id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
     name: "Admin User",
     email: "admin@university.edu",
     registrationNumber: "ADM-001",
@@ -150,9 +150,9 @@ export const courses: Course[] = [
     code: "CS-433",
     description:
       "Advanced data structures and algorithmic analysis.",
-    teacherId: "t1t1t1t1-t1t1-t1t1-t1t1-t1t1t1t1t1t1",
+    teacherId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     teacherName: "Dr. Sarah Thompson",
-    students: ["u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1", "u2u2u2u2-u2u2-u2u2-u2u2-u2u2u2u2u2u2"],
+    students: ["11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222"],
     color: "hsl(234, 89%, 58%)",
     semester: "Spring 2026",
     credits: 4,
@@ -172,7 +172,7 @@ export const courses: Course[] = [
         dueDate: "2026-02-01",
         maxScore: 100,
         submissions: [
-          { id: "s1", studentId: "u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1", studentName: "Alice Johnson", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", submittedAt: "2026-01-30", grade: 95, feedback: "Excellent work! Clean code structure.", status: "graded" },
+          { id: "s1", studentId: "11111111-1111-1111-1111-111111111111", studentName: "Alice Johnson", assignmentId: "a1a1a1a1-1111-1111-1111-111111111111", submittedAt: "2026-01-30", grade: 95, feedback: "Excellent work! Clean code structure.", status: "graded" },
         ],
       },
     ],
@@ -183,9 +183,9 @@ export const courses: Course[] = [
     code: "MATH-301",
     description:
       "Study of vectors, matrices, and linear transformations.",
-    teacherId: "t2t2t2t2-t2t2-t2t2-t2t2-t2t2t2t2t2t2",
+    teacherId: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     teacherName: "Prof. James Carter",
-    students: ["u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1"],
+    students: ["11111111-1111-1111-1111-111111111111"],
     color: "hsl(160, 60%, 45%)",
     semester: "Spring 2026",
     credits: 3,
@@ -263,9 +263,9 @@ export const liveClasses: LiveClass[] = [
     scheduledAt: new Date().toISOString(),
     duration: 90,
     status: "live",
-    teacherId: "t1t1t1t1-t1t1-t1t1-t1t1-t1t1t1t1t1t1",
+    teacherId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
     teacherName: "Dr. James Carter",
-    attendees: ["u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1", "u2u2u2u2-u2u2-u2u2-u2u2-u2u2u2u2u2u2"],
+    attendees: ["11111111-1111-1111-1111-111111111111", "22222222-2222-2222-2222-222222222222"],
     description: "Deep dive into advanced graph algorithms including Dijkstra, A*, and Network Flow.",
   },
   {
@@ -276,7 +276,7 @@ export const liveClasses: LiveClass[] = [
     scheduledAt: new Date(Date.now() + 86400000).toISOString(),
     duration: 60,
     status: "scheduled",
-    teacherId: "t2t2t2t2-t2t2-t2t2-t2t2-t2t2t2t2t2t2",
+    teacherId: "cccccccc-cccc-cccc-cccc-cccccccccccc",
     teacherName: "Prof. Sarah Kim",
     attendees: [],
     description: "Understanding the geometric and algebraic significance of eigenvectors.",

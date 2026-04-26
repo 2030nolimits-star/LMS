@@ -36,11 +36,11 @@ ALTER TABLE public.attendance DISABLE ROW LEVEL SECURITY;
 -- 3. DEFINE IDS & INSERT DATA
 DO $$ 
 DECLARE 
-    admin_id UUID := 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1';
-    teacher_thompson_id UUID := 't1t1t1t1-t1t1-t1t1-t1t1-t1t1t1t1t1t1';
-    teacher_carter_id UUID := 't2t2t2t2-t2t2-t2t2-t2t2-t2t2t2t2t2t2';
-    student_alice_id UUID := 'u1u1u1u1-u1u1-u1u1-u1u1-u1u1u1u1u1u1';
-    student_bob_id UUID := 'u2u2u2u2-u2u2-u2u2-u2u2-u2u2u2u2u2u2';
+    admin_id UUID := 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+    teacher_thompson_id UUID := 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+    teacher_carter_id UUID := 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+    student_alice_id UUID := '11111111-1111-1111-1111-111111111111';
+    student_bob_id UUID := '22222222-2222-2222-2222-222222222222';
     course_ds_id UUID := 'c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1';
     course_math_id UUID := 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2';
     assign_1_id UUID := 'a1a1a1a1-1111-1111-1111-111111111111';
