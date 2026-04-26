@@ -37,11 +37,12 @@ BEGIN
         ALTER TABLE public.submissions ADD COLUMN file_name TEXT;
     END IF;
 
-    -- Ensure messages table exists
+    -- Ensure messages table exists (Relaxed constraints for demo)
+    DROP TABLE IF EXISTS public.messages CASCADE;
     CREATE TABLE IF NOT EXISTS public.messages (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        sender_id UUID REFERENCES public.profiles(id) NOT NULL,
-        receiver_id UUID REFERENCES public.profiles(id) NOT NULL,
+        sender_id UUID NOT NULL,
+        receiver_id UUID NOT NULL,
         content TEXT NOT NULL,
         is_read BOOLEAN DEFAULT false,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
