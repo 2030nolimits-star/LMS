@@ -134,12 +134,12 @@ VALUES
 -- ATTENDANCE
 INSERT INTO public.attendance (student_id, course_id, date, status, marked_by)
 VALUES 
-(s1, course_ds_id, now()::date, 'present', 'auto'),
-(s2, course_ds_id, now()::date, 'present', 'auto'),
-(s4, course_ds_id, now()::date, 'present', 'manual'),
-(s5, course_ds_id, now()::date, 'present', 'manual'),
-(s4, course_math_id, now()::date, 'present', 'auto'),
-(s5, course_math_id, now()::date, 'late', 'manual');
+(s1, course_ds_id, now()::date, 'present', admin_id),
+(s2, course_ds_id, now()::date, 'present', admin_id),
+(s4, course_ds_id, now()::date, 'present', teacher_thompson_id),
+(s5, course_ds_id, now()::date, 'present', teacher_thompson_id),
+(s4, course_math_id, now()::date, 'present', admin_id),
+(s5, course_math_id, now()::date, 'late', teacher_thompson_id);
 
 -- MESSAGES
 INSERT INTO public.messages (id, sender_id, receiver_id, content, is_read, created_at)
