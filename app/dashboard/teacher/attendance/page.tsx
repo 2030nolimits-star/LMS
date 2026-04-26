@@ -72,7 +72,7 @@ export default function TeacherAttendancePage() {
         course_id: selectedCourseId,
         date: new Date().toISOString().split('T')[0],
         status: attendanceData[student.id],
-        marked_by: currentUser!.name
+        marked_by: currentUser!.id
       }));
       await submitAttendance(records);
       toast.success("Attendance marked successfully!");

@@ -127,10 +127,18 @@ export async function getStudentGrades(studentId: string): Promise<Grade[]> {
 export async function getTeacherDashboardData(teacherId: string) {
   const { data: courses, error: courseError } = await supabase
     .from("courses")
-    .select("*, assignments (*, submissions (*)), materials (*), enrollments (*, profiles (*))")
+    .select(`
+      *, 
+      assignments (*, submissions (*)), 
+      materials (*), 
+      enrollments (*, profiles:student_id (*))
+    `)
     .eq("teacher_id", teacherId);
 
-  if (courseError) return { courses: [], totalStudents: 0, pendingGrading: 0 };
+  if (courseError) {
+    console.error("Teacher Dashboard Data Error:", courseError);
+    return { courses: [], totalStudents: 0, pendingGrading: 0 };
+  }
 
   let pendingGrading = 0;
   courses.forEach(course => {
@@ -152,7 +160,7 @@ export async function getTeacherDashboardData(teacherId: string) {
       teacherId: (c as any).teacher_id,
       students: (c as any).enrollments?.map((e: any) => ({
         ...e.profiles,
-        registrationNumber: e.profiles.registration_number
+        registrationNumber: e.profiles?.registration_number || e.profiles?.registrationNumber
       })) || [],
       assignments: (c as any).assignments?.map((a: any) => ({
         ...a,
@@ -365,13 +373,27 @@ export async function getTeacherLiveClasses(teacherId: string) {
 }
 
 export async function scheduleLiveClass(classData: Partial<LiveClass>) {
+  // Map camelCase to snake_case for DB
+  const insertData = {
+    id: classData.id || crypto.randomUUID(),
+    title: classData.title,
+    course_id: classData.courseId || (classData as any).course_id,
+    teacher_id: classData.teacherId || (classData as any).teacher_id,
+    scheduled_at: classData.scheduledAt || (classData as any).scheduled_at,
+    duration: classData.duration,
+    status: classData.status || "scheduled"
+  };
+
   const { data, error } = await supabase
     .from("live_classes")
-    .insert([classData])
+    .insert([insertData])
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Schedule Live Class Error:", error);
+    throw error;
+  }
   return data;
 }
 
@@ -432,10 +454,13 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
     fileUrl = publicUrl;
   }
 
-  const insertData = { ...materialData };
-  if (fileUrl) {
-    (insertData as any).file_url = fileUrl;
-  }
+  const insertData = {
+    title: materialData.title,
+    type: materialData.type,
+    course_id: materialData.courseId || (materialData as any).course_id,
+    file_size: (materialData as any).file_size || (materialData as any).size,
+    file_url: fileUrl || (materialData as any).file_url
+  };
 
   const { data, error } = await supabase
     .from("materials")
@@ -476,7 +501,11 @@ export async function submitAssignmentWithFile(submissionData: any, file?: File)
   const { data, error } = await supabase
     .from("submissions")
     .insert([{
-      ...submissionData,
+      student_id: submissionData.student_id || submissionData.studentId,
+      assignment_id: submissionData.assignment_id || submissionData.assignmentId,
+      content: submissionData.content,
+      status: submissionData.status || "submitted",
+      submitted_at: submissionData.submitted_at || new Date().toISOString(),
       file_url: fileUrl || null,
       file_name: fileName || null
     }])
