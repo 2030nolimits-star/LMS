@@ -25,6 +25,13 @@ END $$;
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
 ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.submissions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assignments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.enrollments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.live_classes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance DISABLE ROW LEVEL SECURITY;
 
 -- 3. DEFINE IDS & INSERT DATA
 DO $$ 
@@ -39,7 +46,12 @@ DECLARE
 BEGIN
 
 -- CLEANUP OLD DEMO DATA (Keep real user data if any)
+DELETE FROM public.messages WHERE sender_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942')) OR receiver_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
+DELETE FROM public.submissions WHERE student_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
+DELETE FROM public.assignments WHERE course_id IN (SELECT id FROM public.courses WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942')));
+DELETE FROM public.live_classes WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942'));
 DELETE FROM public.enrollments WHERE student_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('4332351', '4332352'));
+DELETE FROM public.courses WHERE teacher_id IN (SELECT id FROM public.profiles WHERE registration_number IN ('TCH-8821', 'TCH-9942'));
 DELETE FROM public.profiles WHERE registration_number IN ('4332351', '4332352', 'TCH-8821', 'TCH-9942');
 
 -- INSERT PROFILES
