@@ -442,6 +442,46 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
   return data;
 }
 
+export async function submitAssignmentWithFile(submissionData: any, file?: File) {
+  let fileUrl = "";
+  let fileName = "";
+
+  if (file) {
+    const fileExt = file.name.split('.').pop();
+    const uniqueId = Math.random().toString(36).substring(2, 15);
+    const pathName = `${submissionData.student_id}/${submissionData.assignment_id}_${uniqueId}.${fileExt}`;
+    fileName = file.name;
+
+    const { error: uploadError } = await supabase.storage
+      .from('submissions')
+      .upload(pathName, file);
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      throw new Error(`Failed to upload file: ${uploadError.message}. Make sure you have a public 'submissions' storage bucket created in Supabase.`);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('submissions')
+      .getPublicUrl(pathName);
+      
+    fileUrl = publicUrl;
+  }
+
+  const { data, error } = await supabase
+    .from("submissions")
+    .insert([{
+      ...submissionData,
+      file_url: fileUrl || null,
+      file_name: fileName || null
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getPendingSubmissions(teacherId: string) {
   const { data, error } = await supabase
     .from("submissions")

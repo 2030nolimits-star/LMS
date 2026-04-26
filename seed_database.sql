@@ -19,6 +19,14 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='submissions' AND column_name='content') THEN
         ALTER TABLE public.submissions ADD COLUMN content TEXT;
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='submissions' AND column_name='file_url') THEN
+        ALTER TABLE public.submissions ADD COLUMN file_url TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='submissions' AND column_name='file_name') THEN
+        ALTER TABLE public.submissions ADD COLUMN file_name TEXT;
+    END IF;
 END $$;
 
 -- 2. DISABLE FOREIGN KEY TO AUTH AND RLS (For Demo Purposes)

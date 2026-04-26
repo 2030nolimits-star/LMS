@@ -18,7 +18,7 @@ import {
   Upload, 
   CheckCircle2 
 } from "lucide-react"
-import { getStudentCourses, sendMessage } from "@/lib/queries"
+import { getStudentCourses, sendMessage, submitAssignmentWithFile } from "@/lib/queries"
 import { supabase } from "@/lib/supabase"
 import type { Course } from "@/lib/types"
 import { courses as mockCourses } from "@/lib/mock-data"
@@ -47,6 +47,7 @@ export default function StudentCoursesPage() {
   const [isSubmitOpen, setIsSubmitOpen] = useState(false)
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null)
   const [submissionText, setSubmissionText] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -86,21 +87,18 @@ export default function StudentCoursesPage() {
     
     setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from("submissions")
-        .insert([{
-          assignment_id: selectedAssignment.id,
-          student_id: currentUser.id,
-          content: submissionText,
-          status: "submitted",
-          submitted_at: new Date().toISOString()
-        }]);
+      await submitAssignmentWithFile({
+        assignment_id: selectedAssignment.id,
+        student_id: currentUser.id,
+        content: submissionText,
+        status: "submitted",
+        submitted_at: new Date().toISOString()
+      }, selectedFile || undefined);
         
-      if (error) throw error;
-      
       toast.success("Assignment submitted successfully!");
       setIsSubmitOpen(false);
       setSubmissionText("");
+      setSelectedFile(null);
       loadData();
     } catch (e: any) {
       toast.error(e.message || "Failed to submit assignment");
@@ -271,12 +269,26 @@ export default function StudentCoursesPage() {
                                          required
                                        />
                                      </div>
-                                     <div className="flex items-center gap-2 text-xs text-muted-foreground bg-white/5 p-3 rounded-lg border border-white/5">
-                                       <Upload className="h-4 w-4" />
-                                       Note: File uploads are coming soon. Please provide a link for now.
+                                     <div className="space-y-2">
+                                       <Label>Upload File (All formats allowed)</Label>
+                                       <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-white/10 p-6 hover:bg-white/5 transition-colors">
+                                         <div className="flex flex-col items-center gap-2 text-muted-foreground text-center">
+                                           <Upload className="h-6 w-6" />
+                                           <p className="text-sm font-medium text-foreground">
+                                             {selectedFile ? selectedFile.name : "Click to upload assignment file"}
+                                           </p>
+                                           <p className="text-xs">Drag and drop or click to browse</p>
+                                         </div>
+                                         <input 
+                                           type="file" 
+                                           className="hidden" 
+                                           onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                         />
+                                       </label>
                                      </div>
-                                     <Button type="submit" className="w-full" disabled={submitting}>
-                                       {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Upload className="h-4 w-4 mr-2" />}
+
+                                     <Button type="submit" className="w-full h-11" disabled={submitting}>
+                                       {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
                                        Submit Assignment
                                      </Button>
                                    </form>
