@@ -376,6 +376,20 @@ export async function sendMessage(senderId: string, receiverId: string, content:
   return data;
 }
 
+export async function markMessagesAsRead(userId: string, otherId: string) {
+  const { error } = await supabase
+    .from("messages")
+    .update({ is_read: true })
+    .eq("receiver_id", userId)
+    .eq("sender_id", otherId)
+    .eq("is_read", false);
+
+  if (error) {
+    console.error("markMessagesAsRead error:", error);
+  }
+}
+
+
 export async function getNotifications(userId: string) {
   const { data, error } = await supabase
     .from("notifications")

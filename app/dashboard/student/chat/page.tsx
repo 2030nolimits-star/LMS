@@ -5,7 +5,7 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Search, MoreVertical, Send, Smile, Paperclip, Loader2, MessageSquare as MessageSquareIcon } from "lucide-react"
-import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/queries"
+import { getConversations, getMessages, sendMessage, getAllUsers, markMessagesAsRead } from "@/lib/queries"
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import type { User } from "@/lib/types"
@@ -47,6 +47,7 @@ export default function StudentChatPage() {
   useEffect(() => {
     if (activeConversation && currentUser) {
       getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+      markMessagesAsRead(currentUser.id, activeConversation.other.id).then(() => loadData());
 
       const channel = supabase
         .channel(`chat_messages_sync`)

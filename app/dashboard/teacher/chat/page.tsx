@@ -5,9 +5,10 @@ import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import { Search, MoreVertical, Send, Smile, Paperclip, Loader2, MessageSquare as MessageSquareIcon } from "lucide-react"
-import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/queries"
+import { getConversations, getMessages, sendMessage, getAllUsers, markMessagesAsRead } from "@/lib/queries"
 import { supabase } from "@/lib/supabase"
 import type { User } from "@/lib/types"
+import { toast } from "sonner"
 
 export default function TeacherChatPage() {
   const { currentUser } = useAuth()
@@ -17,6 +18,7 @@ export default function TeacherChatPage() {
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [newMessage, setNewMessage] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!currentUser) return;
@@ -42,6 +44,7 @@ export default function TeacherChatPage() {
   useEffect(() => {
     if (activeConversation && currentUser) {
       getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+      markMessagesAsRead(currentUser.id, activeConversation.other.id).then(() => loadData());
 
       // Subscribe to real-time messages for this conversation
       const channel = supabase
@@ -82,14 +85,17 @@ export default function TeacherChatPage() {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation || !currentUser) return;
     
+    setSubmitting(true);
     try {
       const msg = await sendMessage(currentUser.id, activeConversation.other.id, newMessage);
-      setMessages([...messages, msg]);
+      setMessages(prev => [...prev, msg]);
       setNewMessage("");
-      // Refresh conversation list to show this person in the sidebar
       loadData();
     } catch (e) {
       console.error(e);
+      toast.error("Failed to send message");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -231,8 +237,8 @@ export default function TeacherChatPage() {
                        placeholder="Type your message..." 
                        className="flex-1 bg-transparent border-none text-sm text-foreground focus:outline-none placeholder:text-muted-foreground px-2"
                      />
-                     <Button type="submit" size="icon" className="h-10 w-10 rounded-xl shrink-0" disabled={!newMessage.trim()}>
-                       <Send className="h-4 w-4" />
+                     <Button type="submit" size="icon" className="h-10 w-10 rounded-xl shrink-0" disabled={!newMessage.trim() || submitting}>
+                       {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                      </Button>
                    </div>
                  </form>
