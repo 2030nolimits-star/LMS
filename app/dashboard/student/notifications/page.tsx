@@ -38,56 +38,45 @@ const iconMap = {
 const richDemoNotifications = [
   {
     id: "rich-1",
-    title: "CSI_5_ADP_2526: Week beginning 27/04/2026",
-    message: "There is no ADP lecture or labs this week (or next): the coursework submission has already taken place and the module is complete.\n\nPlease use this time to focus on your other modules and exam preparation. We will be holding a final wrap-up session in early May.",
+    title: "CS101: Week beginning 27/04/2026",
+    message: "There is no Introduction to CS lecture or labs this week (or next): the coursework submission has already taken place and the module is complete.\n\nPlease use this time to focus on your other modules and exam preparation.",
     type: "announcement",
     is_read: false,
     created_at: new Date(Date.now() - 1000 * 60 * 133).toISOString(),
-    instructor: "Mike Child",
-    courseCode: "CSI_5_ADP_2526",
+    instructor: "Dr. Sarah Thompson",
+    courseCode: "CS101",
     category: "Announcements"
   },
   {
     id: "rich-2",
-    title: "4637_2526: Need Career support?",
-    message: "If you need any career support, guidance or advice on your next steps after university, the Careers team is here to help.\n\nYou can book appointments through the portal or visit us in the Student Union building. We offer CV workshops, mock interviews, and one-on-one coaching.",
+    title: "MATH201: Need Career support?",
+    message: "If you need any career support, guidance or advice on your next steps after university, the Careers team is here to help.\n\nYou can book appointments through the portal or visit us in the Student Union building.",
     type: "announcement",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 16.05).toISOString(),
     instructor: "University Careers",
-    courseCode: "4637_2526",
+    courseCode: "MATH201",
     category: "Career Support"
   },
   {
     id: "rich-3",
-    title: "NS_CPD_002_2526: Explore the AI for Learning Course",
-    message: "This course is designed to help you understand the basics of AI and how it can be used to enhance your learning experience.\n\nModules include Prompt Engineering, AI Ethics, and Academic Integrity. All students are encouraged to complete the basic certification by the end of the term.",
+    title: "General: Explore the AI for Learning Course",
+    message: "This course is designed to help you understand the basics of AI and how it can be used to enhance your learning experience.",
     type: "announcement",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20.1).toISOString(),
     instructor: "Digital Learning Team",
-    courseCode: "NS_CPD_002_2526"
+    courseCode: "LMS-GEN"
   },
   {
     id: "rich-4",
-    title: "CSI_5_BDD_2526: LATE CW SUBMISSION CLOSES SOON",
-    message: "The window for late coursework submissions for BDD will close in 24 hours. Please ensure your files are uploaded to the correct portal.\n\nSubmissions after this deadline will receive a mark of zero. No further extensions will be granted.",
+    title: "MATH201: LATE CW SUBMISSION CLOSES SOON",
+    message: "The window for late coursework submissions for Calculus II will close in 24 hours. Please ensure your files are uploaded to the correct portal.",
     type: "announcement",
     is_read: true,
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 24.9).toISOString(),
-    instructor: "Prof. Sarah Jenkins",
-    courseCode: "CSI_5_BDD_2526"
-  },
-  {
-    id: "rich-5",
-    title: "CSI_5_SFE_2526: URGENT: Room change for FW-204 and FW-206 students",
-    message: "Please note that tomorrow's session will now be held in the Great Hall instead of the designated lab rooms.\n\nThis change is due to scheduled maintenance in the Engineering block. Please arrive 5 minutes early to find your workstation.",
-    type: "announcement",
-    is_read: true,
-    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24 * 25.15).toISOString(),
-    instructor: "Dr. Robert Smith",
-    location: "Great Hall",
-    courseCode: "CSI_5_SFE_2526"
+    instructor: "Prof. James Brown",
+    courseCode: "MATH201"
   }
 ]
 
