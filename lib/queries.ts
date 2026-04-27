@@ -348,7 +348,8 @@ export async function getMessages(userId: string, otherId: string) {
   const { data, error } = await supabase
     .from("messages")
     .select("*")
-    .or(`sender_id.eq.${userId},sender_id.eq.${otherId}`)
+    .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+    .or(`sender_id.eq.${otherId},receiver_id.eq.${otherId}`)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -356,16 +357,18 @@ export async function getMessages(userId: string, otherId: string) {
     return [];
   }
 
-  return (data || []).filter(msg => 
-    (msg.sender_id === userId && msg.receiver_id === otherId) ||
-    (msg.sender_id === otherId && msg.receiver_id === userId)
-  );
+  return data || [];
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {
   const { data, error } = await supabase
     .from("messages")
-    .insert([{ sender_id: senderId, receiver_id: receiverId, content }])
+    .insert([{ 
+      sender_id: senderId, 
+      receiver_id: receiverId, 
+      content,
+      is_read: false 
+    }])
     .select()
     .single();
 

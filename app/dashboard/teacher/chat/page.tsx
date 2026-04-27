@@ -45,30 +45,36 @@ export default function TeacherChatPage() {
 
       // Subscribe to real-time messages for this conversation
       const channel = supabase
-        .channel(`chat_messages`)
+        .channel(`chat_messages_sync`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
           table: 'messages'
         }, (payload) => {
           const newMsg = payload.new;
-          // Only add the message if it belongs to the current active conversation
           if (
             (newMsg.sender_id === currentUser.id && newMsg.receiver_id === activeConversation.other.id) ||
             (newMsg.sender_id === activeConversation.other.id && newMsg.receiver_id === currentUser.id)
           ) {
             setMessages(prev => {
-              // Avoid duplicates
               if (prev.some(m => m.id === newMsg.id)) return prev;
               return [...prev, newMsg];
             });
           }
-          // Also refresh conversation list for the sidebar
           loadData();
         })
         .subscribe();
 
-      return () => { supabase.removeChannel(channel) };
+      // Polling fallback
+      const pollInterval = setInterval(() => {
+        getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+        loadData();
+      }, 5000);
+
+      return () => { 
+        supabase.removeChannel(channel);
+        clearInterval(pollInterval);
+      };
     }
   }, [activeConversation, currentUser])
 

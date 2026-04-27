@@ -47,7 +47,7 @@ export default function StudentChatPage() {
       getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
 
       const channel = supabase
-        .channel(`student_chat_messages`)
+        .channel(`chat_messages_sync`)
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
@@ -67,7 +67,18 @@ export default function StudentChatPage() {
         })
         .subscribe();
 
-      return () => { supabase.removeChannel(channel) };
+      // Polling fallback
+      const pollInterval = setInterval(() => {
+        if (activeConversation) {
+          getMessages(currentUser.id, activeConversation.other.id).then(setMessages);
+          loadData();
+        }
+      }, 5000);
+
+      return () => { 
+        supabase.removeChannel(channel);
+        clearInterval(pollInterval);
+      };
     }
   }, [activeConversation, currentUser])
 
