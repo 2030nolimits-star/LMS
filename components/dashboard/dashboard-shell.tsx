@@ -25,13 +25,6 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
     }
   }, [isAuthenticated, router])
 
-  useEffect(() => {
-    if (!currentUser) return
-    if (currentUser.role !== role) {
-      router.push(`/dashboard/${currentUser.role}`)
-    }
-  }, [currentUser, role, router])
-
   if (!isAuthenticated || !currentUser) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -86,7 +79,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
         <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sidebar-accent text-xs font-medium text-sidebar-accent-foreground">
-              {currentUser.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+              {currentUser.avatar}
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-medium text-sidebar-foreground">
@@ -107,9 +100,7 @@ export function DashboardShell({ role, children }: DashboardShellProps) {
       {/* Main content area */}
       <div className="flex flex-1 flex-col">
         <DashboardHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 relative bg-mesh">
-          <div className="mx-auto w-full max-w-7xl">{children}</div>
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 relative bg-mesh">{children}</main>
       </div>
     </div>
   )

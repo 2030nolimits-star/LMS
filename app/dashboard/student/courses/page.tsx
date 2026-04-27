@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
@@ -41,6 +42,7 @@ const materialIcons: Record<string, React.ElementType> = {
 
 export default function StudentCoursesPage() {
   const { currentUser } = useAuth()
+  const router = useRouter()
   const [courses, setCourses] = useState<Course[]>([])
   const [allAvailableCourses, setAllAvailableCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(true)
@@ -251,43 +253,25 @@ export default function StudentCoursesPage() {
                                        {sub.grade}/{a.maxScore || a.max_score}
                                      </Badge>
                                    ) : sub ? (
-                                     <Badge className="bg-primary/20 text-primary border-none shrink-0">Submitted</Badge>
+                                     <div className="flex items-center gap-3">
+                                       <Badge className="bg-primary/20 text-primary border-none shrink-0">Submitted</Badge>
+                                       <Button 
+                                         variant="ghost" 
+                                         size="sm" 
+                                         className="rounded-lg text-xs h-8 px-3"
+                                         onClick={() => router.push(`/dashboard/student/courses/${course.id}/assignments/${a.id}`)}
+                                       >
+                                         View
+                                       </Button>
+                                     </div>
                                    ) : (
-                                     <Dialog open={isSubmitOpen && selectedAssignment?.id === a.id} onOpenChange={(open) => {
-                                       setIsSubmitOpen(open);
-                                       if (open) setSelectedAssignment(a);
-                                     }}>
-                                       <DialogTrigger asChild>
-                                         <Button size="sm" className="rounded-lg text-xs h-8">Submit</Button>
-                                       </DialogTrigger>
-                                       <DialogContent>
-                                         <DialogHeader>
-                                           <DialogTitle>Submit Assignment</DialogTitle>
-                                         </DialogHeader>
-                                         <form onSubmit={handleSubmitAssignment} className="space-y-4 pt-2">
-                                           <div className="space-y-2">
-                                             <Label>Content / Link</Label>
-                                             <Textarea 
-                                               placeholder="Type your content or paste a link..." 
-                                               value={submissionText}
-                                               onChange={(e) => setSubmissionText(e.target.value)}
-                                               required
-                                             />
-                                           </div>
-                                           <div className="space-y-2">
-                                             <Label>Attachment</Label>
-                                             <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-white/10 p-6 hover:bg-white/5 transition-colors">
-                                               <Upload className="h-6 w-6 text-muted-foreground" />
-                                               <p className="text-sm mt-2 font-medium">{selectedFile ? selectedFile.name : "Select a file"}</p>
-                                               <input type="file" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
-                                             </label>
-                                           </div>
-                                           <Button type="submit" className="w-full" disabled={submitting}>
-                                             {submitting ? "Submitting..." : "Submit Now"}
-                                           </Button>
-                                         </form>
-                                       </DialogContent>
-                                     </Dialog>
+                                     <Button 
+                                       size="sm" 
+                                       className="rounded-lg text-xs h-8 px-4"
+                                       onClick={() => router.push(`/dashboard/student/courses/${course.id}/assignments/${a.id}`)}
+                                     >
+                                       Submit
+                                     </Button>
                                    )}
                                  </div>
                                )

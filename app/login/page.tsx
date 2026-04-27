@@ -18,9 +18,9 @@ import { BookOpen, Eye, EyeOff, Sparkles, Star, GraduationCap, Video, MessageSqu
 import { ThemeToggle } from "@/components/theme-toggle"
 
 const demoAccounts = [
-  { label: "Student", reg: "4332351", role: "student" as const },
-  { label: "Teacher", reg: "TCH-8821", role: "teacher" as const },
-  { label: "Admin", reg: "ADM-001", role: "admin" as const },
+  { label: "Student", reg: "STU-2025-001", role: "student" as const },
+  { label: "Teacher", reg: "TCH-2020-001", role: "teacher" as const },
+  { label: "Admin", reg: "ADM-2018-001", role: "admin" as const },
 ]
 
 export default function LoginPage() {
@@ -144,7 +144,7 @@ export default function LoginPage() {
                   <Input
                     id="identifier"
                     type="text"
-                    placeholder="e.g. 4332351 or name@edu.com"
+                    placeholder="e.g. STU-2025-001 or name@edu.com"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     required

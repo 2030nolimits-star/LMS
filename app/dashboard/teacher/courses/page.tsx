@@ -40,7 +40,7 @@ export default function TeacherCoursesPage() {
   const [uploading, setUploading] = useState(false)
   const [materialFile, setMaterialFile] = useState<File | null>(null)
   const [materialTitle, setMaterialTitle] = useState("")
-  const [materialType, setMaterialType] = useState("pdf")
+  const [materialType, setMaterialType] = useState<"video" | "document" | "pdf" | "slide">("pdf")
   
   const [newCourse, setNewCourse] = useState({
     title: "",
@@ -201,7 +201,7 @@ export default function TeacherCoursesPage() {
                </div>
                <div className="flex flex-col gap-2">
                  <Label>Type</Label>
-                 <Select value={materialType} onValueChange={setMaterialType}>
+                 <Select value={materialType} onValueChange={(val: any) => setMaterialType(val)}>
                    <SelectTrigger>
                      <SelectValue />
                    </SelectTrigger>

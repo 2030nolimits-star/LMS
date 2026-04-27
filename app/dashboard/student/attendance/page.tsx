@@ -35,9 +35,12 @@ export default function StudentAttendancePage() {
           setAttendance(attData)
           setCourses(courseData)
         } else {
-          // Fallback for demo: dynamic mock data based on logged-in user
-          setAttendance(mockAttRecords.filter(a => a.studentId === currentUser!.id))
-          setCourses(mockCourses.filter(c => currentUser!.enrolledCourses?.includes(c.id)).slice(0, 4))
+          // Fallback for demo: show premium mock data
+          const studentAtt = mockAttRecords.filter(a => a.studentId === currentUser!.id);
+          const studentCourses = mockCourses.filter(c => currentUser!.enrolledCourses?.includes(c.id));
+          
+          setAttendance(studentAtt.length > 0 ? studentAtt : mockAttRecords.slice(0, 8));
+          setCourses(studentCourses.length > 0 ? studentCourses : mockCourses.slice(0, 4));
         }
       } catch(e) {
         console.error(e)
@@ -107,7 +110,7 @@ export default function StudentAttendancePage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {courses.length === 0 && <p className="text-sm text-muted-foreground p-2 col-span-full">No enrolled courses found.</p>}
           {courses.map((course) => {
-            const courseAtt = attendance.filter((a) => a.course_id === course.id)
+            const courseAtt = attendance.filter((a) => a.course_id === course.id || a.courseId === course.id)
             const present = courseAtt.filter((a) => a.status === "present").length
             const rate = courseAtt.length > 0 ? Math.round((present / courseAtt.length) * 100) : 0
             

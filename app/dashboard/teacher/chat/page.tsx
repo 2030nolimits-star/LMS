@@ -30,7 +30,8 @@ export default function TeacherChatPage() {
         getAllUsers()
       ]);
       setConversations(convs);
-      setAllUsers(users.filter(u => u.id !== currentUser!.id));
+      // Filter out current user and users who already have an active conversation
+      setAllUsers(users.filter(u => u.id !== currentUser!.id && !convs.some(c => c.other.id === u.id)));
     } catch (e) {
       console.error(e);
     } finally {
@@ -126,7 +127,7 @@ export default function TeacherChatPage() {
                 <div 
                   key={conv.id} 
                   onClick={() => setActiveConversation(conv)}
-                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${activeConversation?.id === conv.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                  className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${activeConversation?.other?.id === conv.other.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
                 >
                   <div className="relative">
                     <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white font-bold text-lg bg-emerald-500/20 text-emerald-400`}>
@@ -153,7 +154,7 @@ export default function TeacherChatPage() {
               ))}
               
               <div className="mt-4 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">All Users</div>
-              {allUsers.filter(u => !conversations.some(c => c.other.id === u.id)).map(user => (
+              {allUsers.map(user => (
                 <div 
                   key={user.id} 
                   onClick={() => setActiveConversation({ id: `new-${user.id}`, other: user, lastMessage: "", timestamp: new Date().toISOString(), unreadCount: 0 })}
@@ -246,4 +247,3 @@ export default function TeacherChatPage() {
     </DashboardShell>
   )
 }
-

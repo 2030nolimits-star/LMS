@@ -55,9 +55,7 @@ export function SidebarNav({ role }: { role: UserRole }) {
   return (
     <nav className="flex flex-col gap-1 px-3 py-4" aria-label="Main navigation">
       {items.map((item) => {
-        const isActive =
-          pathname === item.href ||
-          (item.href !== `/dashboard/${role}` && pathname.startsWith(`${item.href}/`))
+        const isActive = pathname === item.href
         return (
           <Link
             key={item.href}

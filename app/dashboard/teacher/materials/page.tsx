@@ -25,9 +25,8 @@ import {
 } from "@/components/ui/select"
 import { FileText, Video, File, Presentation, Plus, Upload, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { getTeacherCourses, uploadMaterial, deleteMaterial } from "@/lib/queries"
+import { getTeacherCourses, uploadMaterial } from "@/lib/queries"
 import type { Course, Material } from "@/lib/types"
-import { courses as mockCourses } from "@/lib/mock-data"
 import { useEffect } from "react"
 
 const materialIcons: Record<string, React.ElementType> = {
@@ -46,12 +45,8 @@ export default function TeacherMaterialsPage() {
   const [newMaterial, setNewMaterial] = useState({
     course_id: "",
     title: "",
-    type: "pdf" as any,
-    file_size: "0 MB"
+    type: "pdf" as any
   })
-  const [fileName, setFileName] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-
 
   useEffect(() => {
     if (!currentUser) return;
@@ -62,12 +57,7 @@ export default function TeacherMaterialsPage() {
     setLoading(true);
     try {
       const data = await getTeacherCourses(currentUser!.id);
-      if (data.length > 0) {
-        setCourses(data);
-      } else {
-        // Fallback for demo
-        setCourses(mockCourses.slice(0, 2));
-      }
+      setCourses(data);
     } catch (e) {
       console.error("Materials load error:", e);
     } finally {
@@ -84,28 +74,15 @@ export default function TeacherMaterialsPage() {
     setUploading(true);
     try {
       await uploadMaterial({
-        ...newMaterial
-      } as any, selectedFile || undefined);
+        ...newMaterial,
+        file_size: "0.5 MB" // Placeholder for demo
+      } as any);
       toast.success("Material uploaded successfully!");
-      setFileName("");
-      setSelectedFile(null);
       loadData();
-    } catch (e: any) {
-      console.error("Upload error:", e);
-      toast.error(e.message || "Upload failed. Check if storage buckets 'materials' exist.");
+    } catch (e) {
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this material?")) return;
-    try {
-      await deleteMaterial(id);
-      toast.success("Material deleted successfully");
-      loadData();
-    } catch (e: any) {
-      toast.error(e.message || "Failed to delete material");
     }
   }
 
@@ -205,29 +182,13 @@ export default function TeacherMaterialsPage() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <Label>File</Label>
-                  <label className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-8 hover:bg-muted/50 transition-colors">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground text-center">
+                  <div className="flex items-center justify-center rounded-lg border-2 border-dashed border-border p-8">
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
                       <Upload className="h-8 w-8" />
-                      <p className="text-sm font-medium text-foreground">
-                        {fileName ? fileName : "Click to select a file from your computer"}
-                      </p>
-                      <p className="text-xs">Supports PDF, DOC, PPT, MP4 (up to 100MB)</p>
+                      <p className="text-sm">Click to upload or drag and drop</p>
+                      <p className="text-xs">PDF, PPTX, MP4 up to 100MB</p>
                     </div>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setSelectedFile(file)
-                          setFileName(file.name)
-                          const sizeMB = (file.size / (1024 * 1024)).toFixed(1)
-                          setNewMaterial({...newMaterial, file_size: `${sizeMB} MB`})
-                        }
-                      }}
-                    />
-                  </label>
+                  </div>
                 </div>
                 <Button type="submit" disabled={uploading}>
                   {uploading ? "Uploading..." : "Upload"}
@@ -271,13 +232,7 @@ export default function TeacherMaterialsPage() {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
-                        {(mat as any).file_url ? (
-                          <a href={(mat as any).file_url} target="_blank" rel="noreferrer" className="hover:underline">
-                            {mat.title}
-                          </a>
-                        ) : (
-                          mat.title
-                        )}
+                        {mat.title}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {mat.courseCode} - {mat.type.toUpperCase()} - {mat.size}
@@ -289,19 +244,10 @@ export default function TeacherMaterialsPage() {
                         day: "numeric",
                       })}
                     </span>
-                    {(mat as any).file_url && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={(mat as any).file_url} target="_blank" rel="noreferrer">
-                          View
-                        </a>
-                      </Button>
-                    )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-destructive"
-                      onClick={() => handleDelete(mat.id)}
-                    >
+                    <Button variant="outline" size="sm">
+                      Edit
+                    </Button>
+                    <Button variant="ghost" size="sm" className="text-destructive">
                       Delete
                     </Button>
                   </CardContent>

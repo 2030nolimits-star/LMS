@@ -100,6 +100,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      if (data.status === "pending") {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        return;
+      }
+      if (data.status === "rejected") {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        return;
+      }
+
       const normalizedProfile = {
         ...data,
         registrationNumber: data.registration_number,
@@ -119,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error("Unexpected error in fetchProfile:", err);
       // Last-resort fallback so the app never hard-blocks the user
+      // However, we should NOT fall back to 'active' if we intended to block.
+      // But if it's a network error, we'll let them through as fallback for demo.
       const fallbackUser: User = {
         id: user.id,
         email: user.email ?? "",
@@ -126,10 +139,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: (user.user_metadata?.role as any) || "student",
         registrationNumber: user.user_metadata?.registration_number || `REG-${user.id.substring(0, 6)}`,
         department: user.user_metadata?.department || "General",
-        status: "active" as any,
+        status: user.user_metadata?.status || "active",
         joinedAt: new Date().toISOString(),
         avatar: undefined,
       };
+      
+      if (fallbackUser.status === "pending" || fallbackUser.status === "rejected") {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        return;
+      }
+
       setCurrentUser(fallbackUser);
       upsertActiveSession(fallbackUser)
     } finally {
@@ -265,6 +285,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!currentUser) return
+
 
     upsertActiveSession(currentUser)
     const heartbeat = window.setInterval(() => {

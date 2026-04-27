@@ -32,11 +32,10 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
-import { Loader2, CheckCircle2, AlertCircle, ExternalLink, Download } from "lucide-react"
+import { Loader2, CheckCircle2, AlertCircle } from "lucide-react"
 import { getTeacherCourses, getPendingSubmissions, submitGrade } from "@/lib/queries"
 import { useEffect } from "react"
 import type { Course } from "@/lib/types"
-import { courses as mockCourses, mockSubmissions } from "@/lib/mock-data"
 
 export default function TeacherGradingPage() {
   const { currentUser } = useAuth()
@@ -60,15 +59,8 @@ export default function TeacherGradingPage() {
         getTeacherCourses(currentUser!.id),
         getPendingSubmissions(currentUser!.id)
       ]);
-      
-      if (cData.length > 0 || sData.length > 0) {
-        setCourses(cData);
-        setSubmissions(sData);
-      } else {
-        // Fallback for demo
-        setCourses(mockCourses.slice(0, 2));
-        setSubmissions(mockSubmissions);
-      }
+      setCourses(cData);
+      setSubmissions(sData);
     } catch (e) {
       console.error("Grading load error:", e);
     } finally {
@@ -191,53 +183,26 @@ export default function TeacherGradingPage() {
                               <DialogTitle>Grading: {sub.studentName}</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleGradeSubmit} className="space-y-4">
-                             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                               <div className="space-y-2">
-                                 <Label className="text-xs text-muted-foreground uppercase tracking-wider">Submission Content</Label>
-                                 <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-sm whitespace-pre-wrap">
-                                   {sub.content || "No text content provided."}
-                                 </div>
-                               </div>
-
-                               {sub.file_url && (
-                                 <div className="space-y-2">
-                                   <Label className="text-xs text-muted-foreground uppercase tracking-wider">Attachment</Label>
-                                   <a 
-                                     href={sub.file_url} 
-                                     target="_blank" 
-                                     rel="noreferrer"
-                                     className="flex items-center gap-3 p-3 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors group"
-                                   >
-                                     <Download className="h-4 w-4 text-primary" />
-                                     <span className="text-sm font-medium text-foreground group-hover:underline flex-1 truncate">
-                                       {sub.file_name || "Download Attachment"}
-                                     </span>
-                                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                                   </a>
-                                 </div>
-                               )}
-
-                               <div className="space-y-2 pt-2 border-t border-white/10">
-                                 <Label>Score (Max {sub.maxScore})</Label>
-                                 <Input 
-                                   type="number" 
-                                   max={sub.maxScore} 
-                                   value={score} 
-                                   onChange={(e) => setScore(Number(e.target.value))}
-                                   required 
-                                 />
-                               </div>
-                               <div className="space-y-2">
-                                 <Label>Feedback</Label>
-                                 <Textarea 
-                                   value={feedback} 
-                                   onChange={(e) => setFeedback(e.target.value)}
-                                   placeholder="Well done on the implementation..." 
-                                   rows={4} 
-                                 />
-                               </div>
-                               <Button type="submit" className="w-full">Submit Grade</Button>
-                             </div>
+                              <div className="space-y-2">
+                                <Label>Score (Max {sub.maxScore})</Label>
+                                <Input 
+                                  type="number" 
+                                  max={sub.maxScore} 
+                                  value={score} 
+                                  onChange={(e) => setScore(Number(e.target.value))}
+                                  required 
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Feedback</Label>
+                                <Textarea 
+                                  value={feedback} 
+                                  onChange={(e) => setFeedback(e.target.value)}
+                                  placeholder="Well done on the implementation..." 
+                                  rows={4} 
+                                />
+                              </div>
+                              <Button type="submit" className="w-full">Submit Grade</Button>
                             </form>
                           </DialogContent>
                         </Dialog>

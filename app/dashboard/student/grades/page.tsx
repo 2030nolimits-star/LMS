@@ -38,18 +38,21 @@ export default function StudentGradesPage() {
         getStudentGrades(currentUser!.id),
         getStudentAttendance(currentUser!.id)
       ])
+      
       if (gradeData.length > 0 || attData.length > 0) {
         setGrades(gradeData)
         const totalAtt = attData.length
         const presentAtt = attData.filter(a => a.status === "present").length
         setAttendanceRate(totalAtt > 0 ? `${Math.round((presentAtt / totalAtt) * 100)}%` : "N/A")
       } else {
-        // Fallback for demo: show premium mock data if DB is empty
-        setGrades(mockGrades.filter(g => g.studentId === currentUser!.id))
+        // Fallback for demo: show premium mock data
+        const studentGrades = mockGrades.filter(g => g.studentId === currentUser!.id);
+        setGrades(studentGrades.length > 0 ? studentGrades : mockGrades.slice(0, 5));
         
         const studentAtt = mockAttendance.filter(a => a.studentId === currentUser!.id)
-        const present = studentAtt.filter(a => a.status === "present").length
-        setAttendanceRate(studentAtt.length > 0 ? `${Math.round((present / studentAtt.length) * 100)}%` : "N/A")
+        const targetAtt = studentAtt.length > 0 ? studentAtt : mockAttendance.slice(0, 10);
+        const present = targetAtt.filter(a => a.status === "present").length
+        setAttendanceRate(targetAtt.length > 0 ? `${Math.round((present / targetAtt.length) * 100)}%` : "N/A")
       }
     } catch(e) {
       console.error(e)

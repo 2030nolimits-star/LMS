@@ -60,7 +60,6 @@ interface RoomMessage {
 export function VideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
   const [token, setToken] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     (async () => {
@@ -71,9 +70,6 @@ export function VideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
         const data = await resp.json();
         if (data.token) {
           setToken(data.token);
-          if (data.mode === "demo" || data.token === "dummy_token_dev_mode") {
-            setDemoMode(true)
-          }
         } else {
           setError(data.error || "Failed to get token");
         }
@@ -82,10 +78,6 @@ export function VideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
       }
     })();
   }, [liveClass.id, currentUser.name]);
-
-  if (demoMode) {
-    return <DemoVideoRoom liveClass={liveClass} currentUser={currentUser} backUrl={backUrl} />
-  }
 
   if (error) {
     return (
@@ -127,7 +119,6 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
   const [handRaised, setHandRaised] = useState(false)
   const [chatOpen, setChatOpen] = useState(false)
   const [participantsOpen, setParticipantsOpen] = useState(false)
-  const panelOpen = chatOpen || participantsOpen
   const [messageInput, setMessageInput] = useState("")
   const [fullscreenParticipant, setFullscreenParticipant] = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -196,7 +187,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
           <Badge className="bg-destructive text-destructive-foreground">
             LIVE
           </Badge>
-          <span className="hidden text-xs text-background/50 sm:inline">
+          <span className="text-xs text-background/50">
             {participants.length} participants
           </span>
         </div>
@@ -205,7 +196,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden relative z-10">
         {/* Video grid container */}
-        <div className={cn("flex flex-1 flex-col", panelOpen && "hidden md:flex")}>
+        <div className="flex flex-1 flex-col">
           <div className="flex-1 p-3 relative">
             {/* Real LiveKit Track Rendering */}
             <VideoConference />
@@ -216,7 +207,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
           </div>
 
           {/* Controls bar */}
-          <div className="flex items-center justify-start gap-2 overflow-x-auto border-t border-foreground/10 glass border-x-0 border-b-0 shadow-none px-3 py-3 sm:justify-center sm:px-4">
+          <div className="flex items-center justify-center gap-2 border-t border-foreground/10 glass border-x-0 border-b-0 shadow-none px-4 py-3">
             <ControlButton
               active={isMicrophoneEnabled}
               onClick={() => localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)}
@@ -252,7 +243,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
               accent={handRaised}
             />
 
-            <div className="mx-1 h-8 w-px bg-background/10 sm:mx-2" />
+            <div className="mx-2 h-8 w-px bg-background/10" />
 
             <ControlButton
               active={chatOpen}
@@ -275,7 +266,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
               badge={participants.length}
             />
 
-            <div className="mx-1 h-8 w-px bg-background/10 sm:mx-2" />
+            <div className="mx-2 h-8 w-px bg-background/10" />
 
             <Button
               variant="ghost"
@@ -290,8 +281,8 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
         </div>
 
         {/* Side panel (chat or participants) */}
-        {panelOpen && (
-          <aside className="absolute inset-0 z-20 flex w-full flex-col border-l border-foreground/10 glass border-y-0 border-r-0 shadow-none md:static md:inset-auto md:w-80">
+        {(chatOpen || participantsOpen) && (
+          <aside className="flex w-80 flex-col border-l border-foreground/10 glass border-y-0 border-r-0 shadow-none">
             {chatOpen && (
               <>
                 <div className="flex items-center justify-between border-b border-foreground/10 px-4 py-3">
@@ -403,101 +394,6 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
             )}
           </aside>
         )}
-      </div>
-    </div>
-  )
-}
-
-function DemoVideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
-  const router = useRouter()
-  const [chatInput, setChatInput] = useState("")
-  const [messages, setMessages] = useState<RoomMessage[]>([
-    {
-      id: "demo-msg-1",
-      senderName: liveClass.teacherName || "Instructor",
-      senderAvatar: "T",
-      content: "Welcome to the demo classroom. Configure LiveKit credentials for real video streaming.",
-      timestamp: new Date(),
-    },
-  ])
-
-  const sendDemoMessage = () => {
-    if (!chatInput.trim()) return
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `demo-msg-${Date.now()}`,
-        senderName: currentUser.name,
-        senderAvatar: currentUser.avatar,
-        content: chatInput.trim(),
-        timestamp: new Date(),
-      },
-    ])
-    setChatInput("")
-  }
-
-  return (
-    <div className="flex min-h-screen flex-col bg-[#0a0a0b] text-white">
-      <header className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-        <div>
-          <h1 className="text-sm font-semibold">{liveClass.title}</h1>
-          <p className="text-xs text-white/60">{liveClass.courseName}</p>
-        </div>
-        <Badge className="bg-amber-500 text-black border-none">DEMO MODE</Badge>
-      </header>
-
-      <div className="grid flex-1 gap-4 p-4 md:grid-cols-[2fr_1fr]">
-        <div className="rounded-xl border border-white/10 bg-white/5 p-6">
-          <p className="text-lg font-semibold">Live video preview unavailable</p>
-          <p className="mt-2 text-sm text-white/70">
-            To enable real live class streaming, add `NEXT_PUBLIC_LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` to your `.env.local`.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Badge variant="secondary">Mic controls ready</Badge>
-            <Badge variant="secondary">Chat working</Badge>
-            <Badge variant="secondary">Role-based classroom routes working</Badge>
-          </div>
-        </div>
-
-        <div className="flex flex-col rounded-xl border border-white/10 bg-white/5">
-          <div className="border-b border-white/10 p-3 text-sm font-medium">Class Chat</div>
-          <div className="flex-1 space-y-2 overflow-y-auto p-3">
-            {messages.map((msg) => (
-              <div key={msg.id} className="rounded-md bg-black/30 p-2">
-                <div className="mb-1 flex items-center gap-2 text-xs text-white/70">
-                  <Avatar className="h-5 w-5">
-                    <AvatarFallback className="text-[10px]">{msg.senderAvatar?.[0] || "U"}</AvatarFallback>
-                  </Avatar>
-                  <span>{msg.senderName}</span>
-                </div>
-                <p className="text-xs text-white/90">{msg.content}</p>
-              </div>
-            ))}
-          </div>
-          <form
-            className="flex gap-2 border-t border-white/10 p-3"
-            onSubmit={(e) => {
-              e.preventDefault()
-              sendDemoMessage()
-            }}
-          >
-            <Input
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Type a message..."
-              className="border-white/20 bg-black/20 text-white"
-            />
-            <Button type="submit" disabled={!chatInput.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </div>
-
-      <div className="border-t border-white/10 p-3">
-        <Button variant="destructive" onClick={() => router.push(backUrl)}>
-          Leave Class
-        </Button>
       </div>
     </div>
   )

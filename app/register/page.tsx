@@ -53,7 +53,6 @@ export default function RegisterPage() {
             role: formData.role,
             registration_number: formData.regNum,
             department: formData.department,
-            status: "pending",
           }
         }
       });
@@ -61,25 +60,7 @@ export default function RegisterPage() {
       if (error) {
         toast.error(error.message);
       } else {
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert([{
-              id: data.user.id,
-              email: formData.email,
-              name: `${formData.firstName} ${formData.lastName}`,
-              role: formData.role,
-              registration_number: formData.regNum,
-              department: formData.department,
-              status: "pending"
-            }]);
-            
-          if (profileError) {
-            console.error("Profile creation error:", profileError);
-          }
-        }
-
-        toast.success("Registration successful! Your account is pending admin approval.");
+        toast.success("Registration successful! Check your email for verification.");
         router.push("/login");
       }
     } catch (err) {

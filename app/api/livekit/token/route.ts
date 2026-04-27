@@ -24,11 +24,7 @@ export async function GET(req: NextRequest) {
   if (!apiKey || !apiSecret || !wsUrl) {
     // If running in development without keys, return a dummy token so the UI doesn't crash
     if (process.env.NODE_ENV === "development") {
-      return NextResponse.json({
-        token: "dummy_token_dev_mode",
-        mode: "demo",
-        message: "LiveKit credentials not configured. Running classroom in demo mode.",
-      });
+      return NextResponse.json({ token: "dummy_token_dev_mode" });
     }
     return NextResponse.json(
       { error: "Server misconfigured: LiveKit keys missing" },
