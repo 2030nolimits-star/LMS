@@ -9,6 +9,7 @@ import { getConversations, getMessages, sendMessage, getAllUsers } from "@/lib/q
 import { supabase } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 import type { User } from "@/lib/types"
+import { toast } from "sonner"
 
 export default function StudentChatPage() {
   const { currentUser } = useAuth()
@@ -18,6 +19,7 @@ export default function StudentChatPage() {
   const [allUsers, setAllUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [newMessage, setNewMessage] = useState("")
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!currentUser) return;
@@ -86,13 +88,17 @@ export default function StudentChatPage() {
     e.preventDefault();
     if (!newMessage.trim() || !activeConversation || !currentUser) return;
     
+    setSubmitting(true);
     try {
       const msg = await sendMessage(currentUser.id, activeConversation.other.id, newMessage);
-      setMessages([...messages, msg]);
+      setMessages(prev => [...prev, msg]);
       setNewMessage("");
       loadData();
     } catch (e) {
       console.error(e);
+      toast.error("Failed to send message");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -238,8 +244,11 @@ export default function StudentChatPage() {
                        placeholder="Type your message..." 
                        className="flex-1 bg-transparent border-none text-sm text-foreground focus:outline-none placeholder:text-muted-foreground px-2"
                      />
-                     <Button type="submit" size="icon" className="h-10 w-10 rounded-xl shrink-0 bg-primary text-primary-foreground" disabled={!newMessage.trim()}>
-                       <Send className="h-4 w-4" />
+                     <Button type="button" variant="ghost" size="icon" className="h-10 w-10 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/10 shrink-0">
+                       <Smile className="h-5 w-5" />
+                     </Button>
+                     <Button type="submit" size="icon" className="h-10 w-10 rounded-xl shrink-0 bg-primary text-primary-foreground" disabled={!newMessage.trim() || submitting}>
+                       {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                      </Button>
                    </div>
                  </form>
