@@ -172,7 +172,7 @@ export const courses: Course[] = [
         courseId: "c1",
         title: "Assignment 1: Hello World Program",
         description: "Write your first Python program and submit the source file.",
-        dueDate: "2026-02-01",
+        dueDate: "2026-06-01",
         maxScore: 100,
         submissions: [
           { id: "s1", studentId: "u1", studentName: "Alice Johnson", assignmentId: "a1", submittedAt: "2026-01-30", grade: 95, feedback: "Excellent work! Clean code structure.", status: "graded" },
@@ -186,7 +186,7 @@ export const courses: Course[] = [
         courseId: "c1",
         title: "Assignment 2: Data Structures",
         description: "Implement a linked list and a stack using Python classes.",
-        dueDate: "2026-02-15",
+        dueDate: "2026-06-05",
         maxScore: 100,
         submissions: [
           { id: "s5", studentId: "u1", studentName: "Alice Johnson", assignmentId: "a2", submittedAt: "2026-02-14", status: "submitted", grade: undefined, feedback: undefined },
@@ -198,7 +198,7 @@ export const courses: Course[] = [
         courseId: "c1",
         title: "Assignment 3: Algorithm Analysis",
         description: "Analyze time and space complexity of common sorting algorithms.",
-        dueDate: "2026-03-01",
+        dueDate: "2026-06-15",
         maxScore: 100,
         submissions: [],
       },
@@ -227,7 +227,7 @@ export const courses: Course[] = [
         courseId: "c2",
         title: "Problem Set 1: Integration by Parts",
         description: "Solve 20 integration problems using integration by parts technique.",
-        dueDate: "2026-02-08",
+        dueDate: "2026-06-01",
         maxScore: 100,
         submissions: [
           { id: "s7", studentId: "u1", studentName: "Alice Johnson", assignmentId: "a4", submittedAt: "2026-02-07", grade: 90, feedback: "Strong understanding of the technique.", status: "graded" },
@@ -240,7 +240,7 @@ export const courses: Course[] = [
         courseId: "c2",
         title: "Problem Set 2: Infinite Series",
         description: "Determine convergence/divergence of given series.",
-        dueDate: "2026-02-22",
+        dueDate: "2026-06-10",
         maxScore: 100,
         submissions: [],
       },
@@ -268,7 +268,7 @@ export const courses: Course[] = [
         courseId: "c3",
         title: "Lab 1: Logic Gate Simulation",
         description: "Use the provided simulator to build AND, OR, NOT, XOR gates.",
-        dueDate: "2026-02-10",
+        dueDate: "2026-06-01",
         maxScore: 50,
         submissions: [
           { id: "s10", studentId: "u1", studentName: "Alice Johnson", assignmentId: "a6", submittedAt: "2026-02-09", grade: 48, feedback: "Excellent lab work.", status: "graded" },
