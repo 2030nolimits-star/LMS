@@ -114,6 +114,7 @@ export async function getAssignmentById(assignmentId: string) {
   return {
     ...data,
     courseTitle: data.courses?.title,
+    courseName: data.courses?.title,
     courseCode: data.courses?.code,
     teacherName: data.courses?.profiles?.name,
     teacherId: data.courses?.teacher_id

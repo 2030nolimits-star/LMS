@@ -24,6 +24,8 @@ import { getAssignmentById, submitAssignment, getStudentSubmissions } from "@/li
 import { useAuth } from "@/lib/auth-context"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { courses as mockCourses } from "@/lib/mock-data"
+
 
 export default function StudentAssignmentDetailPage() {
   const params = useParams()
@@ -50,10 +52,25 @@ export default function StudentAssignmentDetailPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const [assignData, submissions] = await Promise.all([
-        getAssignmentById(assignmentId),
-        getStudentSubmissions(currentUser!.id, assignmentId)
-      ]);
+      let assignData = await getAssignmentById(assignmentId);
+      
+      // Fallback to mock data for demo purposes
+      if (!assignData) {
+        mockCourses.forEach(c => {
+          const found = c.assignments.find(a => a.id === assignmentId);
+          if (found) {
+            assignData = {
+              ...found,
+              courseName: c.title,
+              courseCode: c.code,
+              teacherName: c.teacherName
+            };
+          }
+        });
+      }
+
+      const submissions = await getStudentSubmissions(currentUser!.id, assignmentId);
+      
       setAssignment(assignData);
       if (submissions.length > 0) {
         setSubmission(submissions[0]);
