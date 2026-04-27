@@ -91,9 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: (user.user_metadata?.role as any) || "student",
           registrationNumber: user.user_metadata?.registration_number || `REG-${user.id.substring(0, 6)}`,
           department: user.user_metadata?.department || "General",
-          status: "active" as any,
+          status: "active",
           joinedAt: new Date().toISOString(),
-          avatar: undefined,
+          avatar: "",
         };
         setCurrentUser(fallbackUser);
         upsertActiveSession(fallbackUser)
@@ -139,12 +139,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: (user.user_metadata?.role as any) || "student",
         registrationNumber: user.user_metadata?.registration_number || `REG-${user.id.substring(0, 6)}`,
         department: user.user_metadata?.department || "General",
-        status: user.user_metadata?.status || "active",
+        status: (user.user_metadata?.status as any) || "active",
         joinedAt: new Date().toISOString(),
-        avatar: undefined,
+        avatar: "",
       };
       
-      if (fallbackUser.status === "pending" || fallbackUser.status === "rejected") {
+      if (fallbackUser.status === "pending" || fallbackUser.status === "suspended") {
         await supabase.auth.signOut();
         setCurrentUser(null);
         return;

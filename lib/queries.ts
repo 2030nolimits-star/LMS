@@ -612,3 +612,29 @@ export async function getLiveClassById(id: string) {
     teacherName: data.courses?.profiles?.name
   } as LiveClass;
 }
+
+export async function publishGlobalNotification(title: string, message: string, type: "grade" | "material" | "class" | "assignment" | "system" | "attendance") {
+  const { data: students } = await supabase.from("profiles").select("id").eq("role", "student");
+  if (!students) return;
+  const notifs = students.map(s => ({
+    user_id: s.id,
+    title,
+    message,
+    type,
+    is_read: false
+  }));
+  await supabase.from("notifications").insert(notifs);
+}
+
+export async function submitAssignmentWithFile(submissionData: any, file?: File) {
+  let fileUrl = "";
+  if (file) {
+    const filePath = `submissions/${submissionData.studentId}/${Date.now()}_${file.name}`;
+    const { error: uploadError } = await supabase.storage.from("submissions").upload(filePath, file);
+    if (!uploadError) {
+      const { data: { publicUrl } } = supabase.storage.from("submissions").getPublicUrl(filePath);
+      fileUrl = publicUrl;
+    }
+  }
+  return submitAssignment({ ...submissionData, fileUrl });
+}

@@ -142,6 +142,9 @@ export const users: User[] = [
   },
 ]
 
+export const mockProfiles = users;
+
+
 // ─── Courses ────────────────────────────────────────────────────────
 export const courses: Course[] = [
   {

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Video, Clock, Calendar, Users, PluSquare, Zap, PlayCircle } from "lucide-react"
+import { Video, Clock, Calendar, Users, PlusSquare, Zap, PlayCircle } from "lucide-react"
 
 const demoLiveClasses = [
   { id: "1", title: "Graph Algorithms Deep Dive", courseName: "Data Structures & Algorithms", status: "live", scheduledAt: new Date().toISOString(), duration: 90, attendees: 35 },

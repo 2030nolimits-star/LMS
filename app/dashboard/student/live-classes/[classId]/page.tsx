@@ -11,9 +11,9 @@ import type { LiveClass } from "@/lib/types"
 // We use the same demo session definitions from the live classes dashboard so the user
 // can click into any of them and see a working demo UI effortlessly.
 const demoSessions: Record<string, LiveClass> = {
-  "1": { id: "1", title: "Graph Algorithms Deep Dive", courseId: "CS301", courseName: "Data Structures & Algorithms", status: "live", scheduledAt: new Date().toISOString(), duration: 90, teacherId: "demo-t1", meetLink: "" },
-  "2": { id: "2", title: "Eigenvectors & Eigenvalues", courseId: "MATH201", courseName: "Linear Algebra", status: "scheduled", scheduledAt: new Date(Date.now() + 86400000).toISOString(), duration: 60, teacherId: "demo-t2", meetLink: "" },
-  "3": { id: "3", title: "Neural Network Backprop",    courseId: "CS401", courseName: "Machine Learning", status: "scheduled", scheduledAt: new Date(Date.now() + 172800000).toISOString(), duration: 120, teacherId: "demo-t3", meetLink: "" }
+  "1": { id: "1", title: "Graph Algorithms Deep Dive", courseId: "CS301", courseName: "Data Structures & Algorithms", status: "live", scheduledAt: new Date().toISOString(), duration: 90, teacherId: "demo-t1", teacherName: "Dr. Alan Turing", attendees: [] },
+  "2": { id: "2", title: "Eigenvectors & Eigenvalues", courseId: "MATH201", courseName: "Linear Algebra", status: "scheduled", scheduledAt: new Date(Date.now() + 86400000).toISOString(), duration: 60, teacherId: "demo-t2", teacherName: "Prof. Gilbert Strang", attendees: [] },
+  "3": { id: "3", title: "Neural Network Backprop",    courseId: "CS401", courseName: "Machine Learning", status: "scheduled", scheduledAt: new Date(Date.now() + 172800000).toISOString(), duration: 120, teacherId: "demo-t3", teacherName: "Dr. Yann LeCun", attendees: [] }
 }
 
 export default function StudentLiveClassRoomPage({

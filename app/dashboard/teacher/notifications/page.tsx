@@ -17,7 +17,6 @@ import {
   ChevronRight,
   MoreVertical,
   Clock,
-  User as UserIcon,
   MapPin,
   ExternalLink,
   Plus
