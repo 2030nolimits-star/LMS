@@ -50,6 +50,13 @@ export default function StudentLiveClassesPage() {
     const isLive = lc.status === "live"
     const isEnded = lc.status === "ended"
     
+    // Check if within 15 minutes of start time
+    const now = new Date()
+    const scheduledTime = new Date(lc.scheduledAt)
+    const diffInMinutes = (scheduledTime.getTime() - now.getTime()) / (1000 * 60)
+    const isJoinableSoon = diffInMinutes <= 15 && diffInMinutes > -lc.duration
+    const canJoin = isLive || isJoinableSoon
+
     return (
       <div key={lc.id} className="glass-card p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start md:items-center gap-4">
@@ -60,6 +67,7 @@ export default function StudentLiveClassesPage() {
              <div className="flex items-center gap-2">
                 <h3 className="text-base font-semibold text-foreground">{lc.title}</h3>
                 {isLive && <Badge className="bg-rose-500 text-white border-none animate-pulse">LIVE NOW</Badge>}
+                {!isLive && isJoinableSoon && !isEnded && <Badge className="bg-emerald-500/80 text-white border-none">OPEN SOON</Badge>}
              </div>
              <p className="text-xs text-muted-foreground mt-0.5">{lc.courseName} · {lc.teacherName}</p>
              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -82,7 +90,7 @@ export default function StudentLiveClassesPage() {
         </div>
         
         <div className="flex shrink-0 border-t border-white/5 pt-3 md:border-t-0 md:pt-0">
-          {isLive ? (
+          {canJoin && !isEnded ? (
             <Link href={`/dashboard/student/live-classes/${lc.id}`} className="w-full md:w-auto">
               <Button size="sm" className="w-full bg-rose-500 hover:bg-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]">
                 Join Classroom
@@ -93,9 +101,12 @@ export default function StudentLiveClassesPage() {
                Recording Unavailable
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="w-full md:w-auto bg-primary/10 border-primary/20 text-primary hover:bg-primary/20" disabled>
-               Starts Soon
-            </Button>
+            <div className="flex flex-col items-end gap-1">
+              <Button variant="outline" size="sm" className="w-full md:w-auto bg-primary/10 border-primary/20 text-primary hover:bg-primary/20 cursor-not-allowed" disabled>
+                Starts Soon
+              </Button>
+              <p className="text-[10px] text-muted-foreground">Opens 15m before</p>
+            </div>
           )}
         </div>
       </div>
