@@ -101,6 +101,7 @@ export async function getUpcomingLiveClasses(courseIds: string[]): Promise<LiveC
     .order("scheduled_at", { ascending: true });
 
   if (error || !data || data.length === 0) {
+    if (courseIds.length === 0) return mock.liveClasses.filter(lc => lc.status !== "ended");
     return mock.liveClasses.filter(lc => courseIds.includes(lc.courseId) && lc.status !== "ended");
   }
   return data.map(lc => ({
@@ -181,7 +182,16 @@ export async function getTeacherDashboardData(teacherId: string) {
       .filter(c => c.teacherId === teacherId || teacherId === "t1")
       .map(c => ({
         ...c,
-        students: (c.students as string[]).map(sid => mock.users.find(u => u.id === sid) || { id: sid, name: "Unknown Student", email: "" })
+        students: (c.students as string[]).map(sid => mock.users.find(u => u.id === sid) || { 
+          id: sid, 
+          name: "Unknown Student", 
+          email: "", 
+          role: "student", 
+          status: "active", 
+          registrationNumber: "N/A", 
+          avatar: "U", 
+          joinedAt: new Date().toISOString() 
+        } as User)
       }));
 
     let pendingGrading = 0;

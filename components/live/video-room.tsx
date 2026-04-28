@@ -125,8 +125,8 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
   const isTeacher = currentUser.role === "teacher"
   const participants = useParticipants();
   const tracks = useTracks([
-    { source: Track.Source.Camera, attach: true },
-    { source: Track.Source.ScreenShare, attach: true },
+    { source: Track.Source.Camera, withPlaceholder: true },
+    { source: Track.Source.ScreenShare, withPlaceholder: false },
   ], { onlySubscribed: false });
 
   const [messages, setMessages] = useState<RoomMessage[]>([])

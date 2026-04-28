@@ -69,7 +69,8 @@ export default function TeacherAttendancePage() {
   const handleMarkAll = (present: boolean) => {
     const newAttendance: Record<string, boolean> = {}
     students.forEach(s => {
-      newAttendance[s.id] = present
+      const studentId = typeof s === "string" ? s : s.id
+      newAttendance[studentId] = present
     })
     setAttendanceList(newAttendance)
   }
@@ -159,14 +160,15 @@ export default function TeacherAttendancePage() {
 
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2 py-2">
                        {students.map((s: any) => {
-                         const isPresent = attendanceList[s.id] ?? false
+                         const studentId = typeof s === "string" ? s : s.id
+                         const isPresent = attendanceList[studentId] ?? false
                          return (
-                           <div key={s.id} 
+                           <div key={studentId} 
                              className={cn(
                                "flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer",
                                isPresent ? "bg-emerald-500/5 border-emerald-500/20" : "bg-white/5 border-white/8"
                              )}
-                             onClick={() => toggleAttendance(s.id)}
+                             onClick={() => toggleAttendance(studentId)}
                            >
                              <div className="flex items-center gap-3">
                                <Avatar className="h-8 w-8 border border-white/10">
