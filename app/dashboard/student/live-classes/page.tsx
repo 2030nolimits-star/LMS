@@ -1,26 +1,52 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { DashboardShell } from "@/components/dashboard/dashboard-shell"
 import { useAuth } from "@/lib/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Video, Clock, Calendar, Users, PlayCircle, Zap } from "lucide-react"
-
-import { liveClasses as mockLiveClasses } from "@/lib/mock-data"
-
-// Rich demo data is now centralized in lib/mock-data.ts
-const demoSessions = mockLiveClasses;
+import { Video, Clock, Calendar, Users, PlayCircle, Zap, Loader2 } from "lucide-react"
+import { getUpcomingLiveClasses, getStudentCourses } from "@/lib/queries"
+import type { LiveClass } from "@/lib/types"
+import { toast } from "sonner"
 
 export default function StudentLiveClassesPage() {
   const { currentUser } = useAuth()
+  const [liveClasses, setLiveClasses] = useState<LiveClass[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (currentUser) {
+      loadData()
+    }
+  }, [currentUser])
+
+  async function loadData() {
+    try {
+      const courses = await getStudentCourses(currentUser!.id)
+      const courseIds = courses.map(c => c.id)
+      if (courseIds.length > 0) {
+        const data = await getUpcomingLiveClasses(courseIds)
+        setLiveClasses(data)
+      } else {
+        setLiveClasses([])
+      }
+    } catch (e) {
+      console.error(e)
+      toast.error("Failed to load live classes")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (!currentUser) return null
 
-  const liveNow = demoSessions.filter((lc) => lc.status === "live")
-  const upcoming = demoSessions.filter((lc) => lc.status === "scheduled")
-  const past = demoSessions.filter((lc) => lc.status === "ended")
+  const liveNow = liveClasses.filter((lc) => lc.status === "live")
+  const upcoming = liveClasses.filter((lc) => lc.status === "scheduled")
+  const past = liveClasses.filter((lc) => lc.status === "ended")
 
-  const renderClass = (lc: any) => {
+  const renderClass = (lc: LiveClass) => {
     const isLive = lc.status === "live"
     const isEnded = lc.status === "ended"
     
@@ -35,7 +61,7 @@ export default function StudentLiveClassesPage() {
                 <h3 className="text-base font-semibold text-foreground">{lc.title}</h3>
                 {isLive && <Badge className="bg-rose-500 text-white border-none animate-pulse">LIVE NOW</Badge>}
              </div>
-             <p className="text-xs text-muted-foreground mt-0.5">{lc.courseName} · {lc.teacher}</p>
+             <p className="text-xs text-muted-foreground mt-0.5">{lc.courseName} · {lc.teacherName}</p>
              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1 bg-white/5 px-2 py-1 rounded-md">
                    <Calendar className="h-3 w-3" />
@@ -76,9 +102,19 @@ export default function StudentLiveClassesPage() {
     )
   }
 
+  if (loading) {
+    return (
+      <DashboardShell role="student">
+        <div className="flex h-[400px] items-center justify-center">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        </div>
+      </DashboardShell>
+    )
+  }
+
   return (
     <DashboardShell role="student">
-      <div className="relative flex flex-col gap-6 bg-mesh">
+      <div className="relative flex flex-col gap-6 bg-mesh min-h-[calc(100vh-10rem)]">
         <div className="pointer-events-none absolute -top-10 right-20 w-64 h-64 rounded-full bg-rose-500/10 blur-3xl" />
 
         <div>
@@ -86,25 +122,44 @@ export default function StudentLiveClassesPage() {
           <p className="text-muted-foreground mt-1">Join interactive live streaming sessions with your instructors.</p>
         </div>
 
-        {liveNow.length > 0 && (
-          <div className="flex flex-col gap-3">
-             <h2 className="text-sm font-semibold uppercase tracking-wider text-rose-400 flex items-center gap-2">
-               <Zap className="h-4 w-4" /> Happening Now
-             </h2>
-             {liveNow.map(renderClass)}
+        {liveClasses.length === 0 ? (
+          <div className="glass-card p-12 text-center flex flex-col items-center justify-center gap-4">
+            <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
+              <Video className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold">No live classes scheduled</h3>
+              <p className="text-muted-foreground max-w-xs mx-auto">Classes will appear here once your instructors schedule them.</p>
+            </div>
           </div>
+        ) : (
+          <>
+            {liveNow.length > 0 && (
+              <div className="flex flex-col gap-3">
+                 <h2 className="text-sm font-semibold uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                   <Zap className="h-4 w-4" /> Happening Now
+                 </h2>
+                 {liveNow.map(renderClass)}
+              </div>
+            )}
+
+            {upcoming.length > 0 && (
+              <div className="flex flex-col gap-3">
+                 <h2 className="text-sm font-semibold uppercase tracking-wider text-primary mt-4">Upcoming Schedule</h2>
+                 {upcoming.map(renderClass)}
+              </div>
+            )}
+
+            {past.length > 0 && (
+              <div className="flex flex-col gap-3">
+                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-4">Past Sessions</h2>
+                 {past.map(renderClass)}
+              </div>
+            )}
+          </>
         )}
-
-        <div className="flex flex-col gap-3">
-           <h2 className="text-sm font-semibold uppercase tracking-wider text-primary mt-4">Upcoming Schedule</h2>
-           {upcoming.map(renderClass)}
-        </div>
-
-        <div className="flex flex-col gap-3">
-           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mt-4">Past Sessions</h2>
-           {past.map(renderClass)}
-        </div>
       </div>
     </DashboardShell>
   )
 }
+
