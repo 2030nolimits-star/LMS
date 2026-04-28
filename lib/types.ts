@@ -20,7 +20,7 @@ export interface Course {
   description: string
   teacherId: string
   teacherName: string
-  students: string[]
+  students: (string | User)[]
   materials: Material[]
   assignments: Assignment[]
   color: string
