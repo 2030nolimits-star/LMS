@@ -177,14 +177,20 @@ export async function getTeacherDashboardData(teacherId: string) {
     .eq("teacher_id", teacherId);
 
   if (courseError || !courses || courses.length === 0) {
-    const mockCourses = mock.courses.filter(c => c.teacherId === teacherId || teacherId === "t1");
+    const mockCourses = mock.courses
+      .filter(c => c.teacherId === teacherId || teacherId === "t1")
+      .map(c => ({
+        ...c,
+        students: (c.students as string[]).map(sid => mock.users.find(u => u.id === sid) || { id: sid, name: "Unknown Student", email: "" })
+      }));
+
     let pendingGrading = 0;
     mockCourses.forEach(c => {
       c.assignments.forEach(a => {
         pendingGrading += a.submissions.filter(s => s.status === "submitted").length;
       });
     });
-    const totalStudents = new Set(mockCourses.flatMap(c => c.students)).size;
+    const totalStudents = new Set(mockCourses.flatMap(c => c.students.map((s: any) => s.id))).size;
     return { courses: mockCourses, totalStudents, pendingGrading };
   }
 
