@@ -15,7 +15,9 @@ export async function getProfile(userId: string): Promise<User | null> {
     .eq("id", userId)
     .single();
   
-  if (error) return null;
+  if (error || !data) {
+    return mock.users.find(u => u.id === userId) || null;
+  }
   return data as User;
 }
 
@@ -117,7 +119,21 @@ export async function getAssignmentById(assignmentId: string) {
     .eq("id", assignmentId)
     .single();
   
-  if (error) return null;
+  if (error || !data) {
+    const mockAssignment = mock.courses.flatMap(c => c.assignments).find(a => a.id === assignmentId);
+    if (mockAssignment) {
+      const course = mock.courses.find(c => c.id === mockAssignment.courseId);
+      return {
+        ...mockAssignment,
+        courseTitle: course?.title,
+        courseName: course?.title,
+        courseCode: course?.code,
+        teacherName: course?.teacherName,
+        teacherId: course?.teacherId
+      };
+    }
+    return null;
+  }
   return {
     ...data,
     courseTitle: data.courses?.title,
@@ -652,7 +668,11 @@ export async function getLiveClassById(id: string) {
     .eq("id", id)
     .single();
 
-  if (error) return null;
+  if (error || !data) {
+    const mockClass = mock.liveClasses.find(lc => lc.id === id);
+    if (mockClass) return mockClass;
+    return null;
+  }
   return {
     ...data,
     courseName: data.courses?.title,
