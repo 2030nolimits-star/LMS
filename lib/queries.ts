@@ -35,6 +35,13 @@ export async function getAllCourses(): Promise<Course[]> {
 }
 
 export async function enrollInCourse(studentId: string, courseId: string) {
+  // Demo Mode
+  if (studentId.startsWith('u') && studentId.length < 5) {
+    const existing = JSON.parse(localStorage.getItem('demo-enrollments') || '[]');
+    localStorage.setItem('demo-enrollments', JSON.stringify([...existing, { student_id: studentId, course_id: courseId }]));
+    return;
+  }
+
   const { error } = await supabase
     .from("enrollments")
     .insert([{ student_id: studentId, course_id: courseId }]);
@@ -100,10 +107,31 @@ export async function getUpcomingLiveClasses(courseIds: string[]): Promise<LiveC
     .neq("status", "ended")
     .order("scheduled_at", { ascending: true });
 
-  if (error || !data || data.length === 0) {
-    if (courseIds.length === 0) return mock.liveClasses.filter(lc => lc.status !== "ended");
-    return mock.liveClasses.filter(lc => courseIds.includes(lc.courseId) && lc.status !== "ended");
+  const mockClasses = mock.liveClasses.filter(lc => {
+    if (courseIds.length === 0) return lc.status !== "ended";
+    return courseIds.includes(lc.courseId) && lc.status !== "ended";
+  });
+
+  // Apply localStorage overrides for demo persistence
+  const overriddenClasses = mockClasses.map(lc => {
+    if (typeof window !== 'undefined') {
+      const savedStatus = localStorage.getItem(`live-class-status-${lc.id}`);
+      if (savedStatus) return { ...lc, status: savedStatus as any };
+    }
+    return lc;
+  });
+
+  // Merge with locally created demo classes
+  let allMockClasses = [...overriddenClasses];
+  if (typeof window !== 'undefined') {
+    const demoClasses = JSON.parse(localStorage.getItem('demo-live-classes') || '[]');
+    allMockClasses = [...allMockClasses, ...demoClasses];
   }
+
+  if (error || !data || data.length === 0) {
+    return allMockClasses as LiveClass[];
+  }
+
   return data.map(lc => ({
     ...lc,
     courseName: (lc as any).courses?.title || "Unknown Course",
@@ -328,11 +356,20 @@ export async function updateUserStatus(userId: string, status: "active" | "rejec
 }
 
 export async function createCourse(courseData: Partial<Course>) {
+  // Demo Mode
+  const teacherId = (courseData as any).teacherId || (courseData as any).teacher_id;
+  if (teacherId === "t1" || teacherId === "t2") {
+    const newCourse = { ...courseData, id: `c-new-${Date.now()}` };
+    const existing = JSON.parse(localStorage.getItem('demo-courses') || '[]');
+    localStorage.setItem('demo-courses', JSON.stringify([...existing, newCourse]));
+    return newCourse;
+  }
+
   const { data, error } = await supabase
     .from("courses")
     .insert([{
       ...courseData,
-      teacher_id: (courseData as any).teacherId || (courseData as any).teacher_id
+      teacher_id: teacherId
     }])
     .select()
     .single();
@@ -342,6 +379,8 @@ export async function createCourse(courseData: Partial<Course>) {
 }
 
 export async function deleteCourse(id: string) {
+  if (id.startsWith('c') && id.length < 5) return; // Mock ID
+
   const { error } = await supabase
     .from("courses")
     .delete()
@@ -357,12 +396,20 @@ export async function getConversations(userId: string) {
     .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
     .order("created_at", { ascending: false });
 
-  if (msgError || !messages) {
-    console.error("getConversations message error:", msgError);
-    return [];
+  let allMessages = messages || [];
+  
+  // Merge with Demo Messages
+  if (typeof window !== 'undefined') {
+    const demoMessages = JSON.parse(localStorage.getItem('demo-messages') || '[]');
+    const userDemoMessages = demoMessages.filter((m: any) => m.sender_id === userId || m.receiver_id === userId);
+    allMessages = [...allMessages, ...userDemoMessages].sort((a, b) => 
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   }
 
-  const otherIds = Array.from(new Set(messages.map(m => 
+  if (allMessages.length === 0) return [];
+
+  const otherIds = Array.from(new Set(allMessages.map(m => 
     m.sender_id === userId ? m.receiver_id : m.sender_id
   )));
 
@@ -412,15 +459,39 @@ export async function getMessages(userId: string, otherId: string) {
     .or(`sender_id.eq.${otherId},receiver_id.eq.${otherId}`)
     .order("created_at", { ascending: true });
 
-  if (error) {
-    console.error("getMessages error:", error);
-    return [];
+  let allMessages = data || [];
+
+  // Merge with Demo Messages
+  if (typeof window !== 'undefined') {
+    const demoMessages = JSON.parse(localStorage.getItem('demo-messages') || '[]');
+    const relevantDemo = demoMessages.filter((m: any) => 
+      (m.sender_id === userId && m.receiver_id === otherId) || 
+      (m.sender_id === otherId && m.receiver_id === userId)
+    );
+    allMessages = [...allMessages, ...relevantDemo].sort((a, b) => 
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
   }
 
-  return data || [];
+  return allMessages;
 }
 
 export async function sendMessage(senderId: string, receiverId: string, content: string) {
+  // Demo Mode
+  if (senderId.length < 5 || receiverId.length < 5) {
+    const newMessage = {
+      id: `msg-new-${Date.now()}`,
+      sender_id: senderId,
+      receiver_id: receiverId,
+      content,
+      is_read: false,
+      created_at: new Date().toISOString()
+    };
+    const existing = JSON.parse(localStorage.getItem('demo-messages') || '[]');
+    localStorage.setItem('demo-messages', JSON.stringify([...existing, newMessage]));
+    return newMessage;
+  }
+
   const { data, error } = await supabase
     .from("messages")
     .insert([{ 
@@ -481,7 +552,26 @@ export async function getTeacherLiveClasses(teacherId: string) {
     .order("scheduled_at", { ascending: true });
 
   if (error || !data || data.length === 0) {
-    return mock.liveClasses.filter(lc => lc.teacherId === teacherId || teacherId === "t1");
+    let mockClasses = mock.liveClasses.filter(lc => lc.teacherId === teacherId || teacherId === "t1");
+    
+    // Merge with locally created demo classes
+    if (typeof window !== 'undefined') {
+      const demoClasses = JSON.parse(localStorage.getItem('demo-live-classes') || '[]');
+      const teacherDemoClasses = demoClasses.filter((dc: any) => dc.teacherId === teacherId);
+      mockClasses = [...mockClasses, ...teacherDemoClasses];
+    }
+
+    // Apply localStorage overrides for demo persistence
+    return mockClasses.map(lc => {
+      if (typeof window !== 'undefined') {
+        const savedStatus = localStorage.getItem(`live-class-status-${lc.id}`);
+        if (savedStatus) return { ...lc, status: savedStatus as any };
+      }
+      return lc;
+    }).map(lc => ({
+      ...lc,
+      courseName: (lc as any).courses?.title || (lc as any).courseName || "Unknown Course"
+    })) as LiveClass[];
   }
   return data.map(lc => ({
     ...lc,
@@ -490,11 +580,27 @@ export async function getTeacherLiveClasses(teacherId: string) {
 }
 
 export async function scheduleLiveClass(classData: Partial<LiveClass>) {
+  const teacherId = classData.teacherId || (classData as any).teacher_id;
+  const courseId = classData.courseId || (classData as any).course_id;
+
+  // Demo Mode Persistence
+  if (teacherId === "t1" || teacherId === "t2" || courseId?.startsWith('c')) {
+    const newClass = {
+      ...classData,
+      id: `lc-new-${Date.now()}`,
+      courseName: classData.courseName || "General Session",
+      status: classData.status || "scheduled"
+    };
+    const existing = JSON.parse(localStorage.getItem('demo-live-classes') || '[]');
+    localStorage.setItem('demo-live-classes', JSON.stringify([...existing, newClass]));
+    return newClass;
+  }
+
   const insertData = {
     id: classData.id || crypto.randomUUID(),
     title: classData.title,
-    course_id: classData.courseId || (classData as any).course_id,
-    teacher_id: classData.teacherId || (classData as any).teacher_id,
+    course_id: courseId,
+    teacher_id: teacherId,
     scheduled_at: classData.scheduledAt || (classData as any).scheduled_at,
     duration: classData.duration,
     status: classData.status || "scheduled"
@@ -546,6 +652,20 @@ export async function uploadMaterial(materialData: Partial<Material>, file?: Fil
   const courseId = materialData.courseId || (materialData as any).course_id;
   if (!courseId) throw new Error("Course ID is required.");
 
+  // Demo Mode Persistence
+  if (courseId.startsWith('c') && courseId.length < 5) {
+    const newMaterial = {
+      ...materialData,
+      id: `m-new-${Date.now()}`,
+      courseId,
+      uploadedAt: new Date().toISOString(),
+      file_url: "https://example.com/demo-file.pdf"
+    };
+    const existing = JSON.parse(localStorage.getItem(`demo-materials-${courseId}`) || '[]');
+    localStorage.setItem(`demo-materials-${courseId}`, JSON.stringify([...existing, newMaterial]));
+    return newMaterial;
+  }
+
   if (file) {
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filePath = `${courseId}/${Math.random().toString(36).substring(2, 7)}_${sanitizedName}`;
@@ -585,6 +705,14 @@ export async function deleteMaterial(id: string) {
 }
 
 export async function submitAssignment(submissionData: any) {
+  // Demo Mode
+  if (submissionData.studentId?.startsWith('u') && submissionData.studentId.length < 5) {
+    const newSubmission = { ...submissionData, id: `s-new-${Date.now()}`, status: "submitted", submitted_at: new Date().toISOString() };
+    const existing = JSON.parse(localStorage.getItem('demo-submissions') || '[]');
+    localStorage.setItem('demo-submissions', JSON.stringify([...existing, newSubmission]));
+    return newSubmission;
+  }
+
   const { data, error } = await supabase
     .from("submissions")
     .insert([{
@@ -636,6 +764,14 @@ export async function getPendingSubmissions(teacherId: string) {
 }
 
 export async function submitGrade(submissionId: string, grade: number, feedback: string) {
+  // Demo Mode
+  if (submissionId.startsWith('s-new') || submissionId.length < 5) {
+    const existing = JSON.parse(localStorage.getItem('demo-submissions') || '[]');
+    const updated = existing.map((s: any) => s.id === submissionId ? { ...s, grade, feedback, status: "graded" } : s);
+    localStorage.setItem('demo-submissions', JSON.stringify(updated));
+    return;
+  }
+
   const { error } = await supabase
     .from("submissions")
     .update({ grade, feedback, status: "graded" })
@@ -644,6 +780,13 @@ export async function submitGrade(submissionId: string, grade: number, feedback:
 }
 
 export async function submitAttendance(records: any[]) {
+  // Demo Mode
+  if (records.length > 0 && records[0].student_id?.startsWith('u') && records[0].student_id.length < 5) {
+    const existing = JSON.parse(localStorage.getItem('demo-attendance') || '[]');
+    localStorage.setItem('demo-attendance', JSON.stringify([...existing, ...records]));
+    return;
+  }
+
   const { error } = await supabase.from("attendance").insert(records);
   if (error) throw error;
 }
@@ -659,8 +802,23 @@ export async function getCourseStudents(courseId: string) {
 }
 
 export async function updateLiveClassStatus(classId: string, status: "live" | "ended") {
+  // Demo Mode Persistence
+  if (typeof window !== 'undefined' && (classId.startsWith('lc') || classId.length < 10)) {
+    localStorage.setItem(`live-class-status-${classId}`, status);
+    return; // Don't even try Supabase for mock IDs to avoid errors
+  }
+
   const { error } = await supabase.from("live_classes").update({ status }).eq("id", classId);
-  if (error) throw error;
+  
+  // If Supabase update fails but it's a demo/mock ID that doesn't exist in DB, 
+  // we still want to persist it locally for the session.
+  if (error) {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`live-class-status-${classId}`, status);
+      return; 
+    }
+    throw error;
+  }
 }
 
 export async function getAllUsers() {
@@ -686,7 +844,13 @@ export async function getLiveClassById(id: string) {
 
   if (error || !data) {
     const mockClass = mock.liveClasses.find(lc => lc.id === id);
-    if (mockClass) return mockClass;
+    if (mockClass) {
+      if (typeof window !== 'undefined') {
+        const savedStatus = localStorage.getItem(`live-class-status-${id}`);
+        if (savedStatus) return { ...mockClass, status: savedStatus as any };
+      }
+      return mockClass;
+    }
     return null;
   }
   return {
