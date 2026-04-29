@@ -467,7 +467,11 @@ function UserParticipantTile({
           )}
         </div>
         <div className="h-8 w-8 rounded-full glass flex items-center justify-center shadow-lg">
-          <MicOff className="h-3.5 w-3.5 text-white/40" />
+          {track?.participant?.isMicrophoneEnabled ? (
+            <Mic className="h-3.5 w-3.5 text-primary" />
+          ) : (
+            <MicOff className="h-3.5 w-3.5 text-white/40" />
+          )}
         </div>
       </div>
 
