@@ -442,7 +442,10 @@ function UserParticipantTile({
       {track ? (
         <VideoTrack 
           trackRef={track} 
-          className="w-full h-full object-cover"
+          className={cn(
+            "w-full h-full object-cover",
+            isLocal && "-scale-x-100"
+          )}
         />
       ) : (
         /* Mock video placeholder / Avatar fallback */
