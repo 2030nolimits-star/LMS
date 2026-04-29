@@ -4,6 +4,8 @@
 
 EduRa is a modern, high-performance Learning Management System built with **Next.js 14**, **Supabase**, and **LiveKit**. It features a stunning glassmorphism design and provides a comprehensive suite of tools for students, teachers, and administrators.
 
+**Live Demo**: [https://lms-rho-six-66.vercel.app](https://lms-rho-six-66.vercel.app)
+
 ## 🚀 Features
 
 ### For Students
