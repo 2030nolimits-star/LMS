@@ -37,6 +37,7 @@ import {
   useRoomContext,
   useLocalParticipant,
   ParticipantContext,
+  VideoTrack,
 } from "@livekit/components-react"
 import { Track } from "livekit-client"
 import "@livekit/components-styles"
@@ -205,6 +206,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
               participant={currentUser} 
               isTeacher={isTeacher}
               isLocal
+              track={tracks.find(t => t.participant.identity === currentUser.name && t.source === Track.Source.Camera)}
             />
 
             {/* Remote Participants */}
@@ -218,6 +220,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
                   role: p.metadata?.includes('teacher') ? 'teacher' : 'student'
                 } as User}
                 isTeacher={p.metadata?.includes('teacher')}
+                track={tracks.find(t => t.participant.sid === p.sid && t.source === Track.Source.Camera)}
               />
             ))}
           </div>
@@ -421,10 +424,12 @@ function UserParticipantTile({
   participant,
   isTeacher,
   isLocal,
+  track,
 }: {
   participant: User | { id: string, name: string, avatar: string, role: string }
   isTeacher?: boolean
   isLocal?: boolean
+  track?: any
 }) {
   return (
     <div
@@ -433,14 +438,22 @@ function UserParticipantTile({
         "aspect-video w-full h-full"
       )}
     >
-      {/* Mock video placeholder / Avatar */}
-      <div className="flex flex-col items-center justify-center w-full h-full transition-transform duration-500 group-hover:scale-110">
-        <div className="flex items-center justify-center rounded-full bg-primary/10 w-20 h-20 md:w-24 md:h-24 border border-primary/20 shadow-inner">
-          <span className="font-medium text-background text-2xl md:text-3xl tracking-tighter">
-            {participant.avatar}
-          </span>
+      {/* Real Video Track */}
+      {track ? (
+        <VideoTrack 
+          trackRef={track} 
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        /* Mock video placeholder / Avatar fallback */
+        <div className="flex flex-col items-center justify-center w-full h-full transition-transform duration-500 group-hover:scale-110">
+          <div className="flex items-center justify-center rounded-full bg-primary/10 w-20 h-20 md:w-24 md:h-24 border border-primary/20 shadow-inner">
+            <span className="font-medium text-background text-2xl md:text-3xl tracking-tighter">
+              {participant.avatar}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Name and Indicators */}
       <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
