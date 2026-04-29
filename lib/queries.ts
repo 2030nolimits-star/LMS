@@ -428,7 +428,7 @@ export async function getConversations(userId: string) {
   const profileMap = new Map(profiles.map(p => [p.id, p]));
   const convMap = new Map();
 
-  messages.forEach(msg => {
+  allMessages.forEach(msg => {
     const otherId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
     const other = profileMap.get(otherId);
     

@@ -36,7 +36,6 @@ import {
   useParticipants,
   useRoomContext,
   useLocalParticipant,
-  ParticipantTile as LiveKitParticipantTile,
   ParticipantContext,
 } from "@livekit/components-react"
 import { Track } from "livekit-client"
@@ -202,7 +201,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
             "grid-cols-2 lg:grid-cols-3"
           )}>
             {/* Local Participant */}
-            <ParticipantTile 
+            <UserParticipantTile 
               participant={currentUser} 
               isTeacher={isTeacher}
               isLocal
@@ -210,7 +209,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
 
             {/* Remote Participants */}
             {participants.filter(p => p.identity !== currentUser.name).map(p => (
-              <ParticipantTile 
+              <UserParticipantTile 
                 key={p.sid}
                 participant={{
                   id: p.sid,
@@ -418,7 +417,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
 // Sub-components
 // ──────────────────────────────────────────────────
 
-function ParticipantTile({
+function UserParticipantTile({
   participant,
   isTeacher,
   isLocal,
