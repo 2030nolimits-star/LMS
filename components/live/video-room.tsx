@@ -65,7 +65,7 @@ export function VideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
     (async () => {
       try {
         const resp = await fetch(
-          `/api/livekit/token?room=${liveClass.id}&username=${currentUser.name}`
+          `/api/livekit/token?room=${encodeURIComponent(liveClass.id)}&username=${encodeURIComponent(currentUser.name)}`
         );
         const data = await resp.json();
         if (data.token) {
@@ -98,6 +98,22 @@ export function VideoRoom({ liveClass, currentUser, backUrl }: VideoRoomProps) {
     );
   }
 
+  if (token === "dummy_token_dev_mode") {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center bg-foreground text-background p-6 text-center">
+        <div className="h-16 w-16 bg-yellow-500/20 rounded-full flex items-center justify-center mb-6">
+          <Settings className="h-8 w-8 text-yellow-500" />
+        </div>
+        <h2 className="text-xl font-bold mb-4">LiveKit Configuration Required</h2>
+        <p className="text-background/60 mb-8 max-w-md">
+          The classroom is running in development mode without real LiveKit credentials. 
+          To enable the camera and live streaming, please add your LiveKit Cloud keys to the .env.local file.
+        </p>
+        <Button onClick={() => window.location.href = backUrl}>Return to Dashboard</Button>
+      </div>
+    );
+  }
+
   return (
     <LiveKitRoom
       video={true}
@@ -125,7 +141,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
   const isTeacher = currentUser.role === "teacher"
   const participants = useParticipants();
   const tracks = useTracks([
-    { source: Track.Source.Camera, withPlaceholder: true },
+    { source: Track.Source.Camera, withPlaceholder: false },
     { source: Track.Source.ScreenShare, withPlaceholder: false },
   ], { onlySubscribed: false });
 
@@ -206,7 +222,7 @@ function VideoRoomContent({ liveClass, backUrl, currentUser }: VideoRoomProps) {
               participant={currentUser} 
               isTeacher={isTeacher}
               isLocal
-              track={tracks.find(t => t.participant.identity === currentUser.name && t.source === Track.Source.Camera)}
+              track={tracks.find(t => (t.participant.identity === localParticipant?.identity || t.participant.identity === currentUser.name) && t.source === Track.Source.Camera)}
             />
 
             {/* Remote Participants */}
