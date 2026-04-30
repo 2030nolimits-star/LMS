@@ -59,8 +59,27 @@ export default function RegisterPage() {
 
       if (error) {
         toast.error(error.message);
-      } else {
-        toast.success("Registration successful! Check your email for verification.");
+      } else if (data.user) {
+        // Create the pending profile in the database
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert([{
+            id: data.user.id,
+            email: formData.email,
+            name: `${formData.firstName} ${formData.lastName}`,
+            role: formData.role,
+            registration_number: formData.regNum,
+            department: formData.department,
+            status: "pending",
+            avatar: formData.firstName[0] + formData.lastName[0]
+          }]);
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          // Still show success for registration, admin can resolve missing profiles
+        }
+
+        toast.success("Registration successful! Your account is pending admin approval.");
         router.push("/login");
       }
     } catch (err) {

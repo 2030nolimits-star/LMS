@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       console.error("Login error:", error);
-      return false;
+      throw error;
     }
   }, [])
 

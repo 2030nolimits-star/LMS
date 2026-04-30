@@ -38,14 +38,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const success = await login(identifier, password)
-      if (success) {
-        // Redirect will happen automatically via useEffect
-      } else {
-        setError("Invalid credentials. Please try again.")
-      }
-    } catch (err) {
-      setError("An unexpected error occurred.")
+      await login(identifier, password)
+      // Redirect will happen automatically via useEffect
+    } catch (err: any) {
+      setError(err.message || "Invalid credentials. Please try again.")
     } finally {
       setIsLoading(false)
     }
