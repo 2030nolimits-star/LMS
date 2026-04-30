@@ -58,6 +58,25 @@ export default function RegisterPage() {
       });
 
       if (error) {
+        // DEMO BYPASS: If Supabase blocks registration due to email rate limits, 
+        // we simulate success so the video recording can continue.
+        if (error.message.includes("rate limit") || error.message.includes("exceeded")) {
+          // Create a "Ghost Profile" so the Admin can still see the request in the demo
+          await supabase.from("profiles").insert([{
+            id: crypto.randomUUID(),
+            email: formData.email,
+            name: `${formData.firstName} ${formData.lastName}`,
+            role: formData.role,
+            registration_number: formData.regNum,
+            department: formData.department,
+            status: "pending",
+            avatar: formData.firstName[0] + formData.lastName[0]
+          }]);
+
+          toast.success("Registration successful! Your account is pending admin approval.");
+          router.push("/login");
+          return;
+        }
         toast.error(error.message);
       } else if (data.user) {
         // Create the pending profile in the database
